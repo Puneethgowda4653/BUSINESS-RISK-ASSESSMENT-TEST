@@ -1,0 +1,2870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Risk Assessment Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add jsPDF and html2canvas libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #ca7ef4;
+            --secondary-color: #3498db;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --success-color: #27ae60;
+            --light-bg: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-color), #1a2530);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .question-container {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .question-container.active {
+            border-left: 5px solid var(--secondary-color);
+            box-shadow: 0 5px 20px rgba(52, 152, 219, 0.15);
+        }
+        
+        /* Slider/Sliding Dots System */
+        .response-slider {
+            margin: 2rem 0;
+            position: relative;
+            padding: 1rem 0;
+        }
+        
+        .slider-track {
+            height: 4px;
+            background: linear-gradient(to right, #e74c3c, #f39c12, #3498db, #27ae60);
+            border-radius: 2px;
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .slider-dots {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-top: -5px;
+        }
+        
+        .slider-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #ddd;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .slider-dot:hover {
+            transform: scale(1.1);
+            border-color: var(--secondary-color);
+        }
+        
+        .slider-dot.active {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.2);
+        }
+        
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .slider-label {
+            text-align: center;
+            flex: 1;
+        }
+        
+        /* Navigation dots */
+        .navigation-dots {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+        
+        .nav-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-dot:hover {
+            transform: scale(1.2);
+            background: #b0b0b0;
+        }
+        
+        .nav-dot.answered {
+            background: var(--secondary-color);
+        }
+        
+        .nav-dot.active {
+            background: var(--primary-color);
+            transform: scale(1.2);
+            box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.2);
+        }
+        
+        .sector-badge {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-left: 1rem;
+        }
+        
+        .sector-1 { background-color: #e8f4fc; color: #2980b9; border: 1px solid #bdd8f0; }
+        .sector-2 { background-color: #f0f8e8; color: #27ae60; border: 1px solid #c5e1a5; }
+        .sector-3 { background-color: #fff8e1; color: #f39c12; border: 1px solid #ffecb3; }
+        .sector-4 { background-color: #fce4ec; color: #c2185b; border: 1px solid #f8bbd9; }
+        .sector-5 { background-color: #f3e5f5; color: #7b1fa2; border: 1px solid #e1bee7; }
+        .sector-6 { background-color: #e0f2f1; color: #00796b; border: 1px solid #b2dfdb; }
+        .sector-7 { background-color: #fff3e0; color: #ef6c00; border: 1px solid #ffe0b2; }
+        .sector-8 { background-color: #e8eaf6; color: #3949ab; border: 1px solid #c5cae9; }
+        .sector-9 { background-color: #fce4ec; color: #c2185b; border: 1px solid #f8bbd9; }
+        .sector-10 { background-color: #f3e5f5; color: #7b1fa2; border: 1px solid #e1bee7; }
+        .sector-e { background-color: #e0e0e0; color: #616161; border: 1px solid #bdbdbd; }
+        
+        .scorecard {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-top: 2rem;
+        }
+        
+        .risk-profile {
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        
+        .critical-risk { background-color: #ffebee; color: #c62828; }
+        .high-risk { background-color: #ffccbc; color: #d84315; }
+        .medium-risk { background-color: #fff3e0; color: #ef6c00; }
+        .low-risk { background-color: #f1f8e9; color: #689f38; }
+        .very-low-risk { background-color: #e8f5e9; color: #2e7d32; }
+        
+        .performance-rating {
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 0.5rem 0;
+        }
+        
+        .performance-excellent { background-color: #e8f5e9; color: #2e7d32; }
+        .performance-good { background-color: #f1f8e9; color: #689f38; }
+        .performance-average { background-color: #e3f2fd; color: #1976d2; }
+        .performance-poor { background-color: #fff3e0; color: #ef6c00; }
+        .performance-very-poor { background-color: #ffebee; color: #c62828; }
+        
+        .gap-item {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+            background-color: #f9f9f9;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .gap-critical { border-left-color: var(--danger-color); }
+        .gap-high { border-left-color: #ff5722; }
+        .gap-moderate { border-left-color: var(--warning-color); }
+        .gap-minor { border-left-color: var(--secondary-color); }
+        
+        .recommendation-card {
+            background: #f0f7ff;
+            border-left: 4px solid var(--secondary-color);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .btn-custom {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-custom:hover {
+            background: #1a2530;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .footer-note {
+            font-size: 0.85rem;
+            color: #777;
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .completion-stats {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+        
+        .question-counter {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-container {
+            margin: 1rem 0;
+        }
+        
+        .section-header {
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 2rem 0 1rem 0;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        /* Domain Score Cards */
+        .domain-score-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            border-left: 5px solid;
+            transition: transform 0.3s ease;
+        }
+        
+        .domain-score-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .domain-score-1 { border-left-color: #2980b9; }
+        .domain-score-2 { border-left-color: #27ae60; }
+        .domain-score-3 { border-left-color: #f39c12; }
+        .domain-score-4 { border-left-color: #c2185b; }
+        .domain-score-5 { border-left-color: #3949ab; }
+        .domain-score-6 { border-left-color: #00796b; }
+        .domain-score-7 { border-left-color: #ef6c00; }
+        .domain-score-8 { border-left-color: #7b1fa2; }
+        .domain-score-9 { border-left-color: #c2185b; }
+        .domain-score-10 { border-left-color: #616161; }
+        
+        .domain-score-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .domain-score-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        
+        .score-description {
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 0.5rem;
+        }
+        
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 2rem 0;
+        }
+        
+        .risk-cell {
+            padding: 1rem;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+        
+        .risk-cell:hover {
+            transform: scale(1.05);
+        }
+        
+        .risk-critical { background-color: #ffcdd2; color: #b71c1c; }
+        .risk-high { background-color: #ffccbc; color: #d84315; }
+        .risk-medium { background-color: #fff3e0; color: #ff8f00; }
+        .risk-low { background-color: #f1f8e9; color: #689f38; }
+        .risk-very-low { background-color: #e8f5e9; color: #2e7d32; }
+        
+        .top-risks {
+            margin-top: 2rem;
+        }
+        
+        .risk-item {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid;
+            transition: transform 0.3s ease;
+        }
+        
+        .risk-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .priority-1 { background-color: #ffebee; border-left-color: #c62828; }
+        .priority-2 { background-color: #ffccbc; border-left-color: #d84315; }
+        .priority-3 { background-color: #fff3e0; border-left-color: #ef6c00; }
+        .priority-4 { background-color: #e8f5e9; border-left-color: #689f38; }
+        .priority-5 { background-color: #e3f2fd; border-left-color: #1976d2; }
+        
+        /* Performance Indicators */
+        .performance-indicator {
+            display: flex;
+            align-items: center;
+            margin: 0.5rem 0;
+        }
+        
+        .performance-bar {
+            flex-grow: 1;
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin: 0 1rem;
+            overflow: hidden;
+        }
+        
+        .performance-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease-in-out;
+        }
+        
+        .benchmark-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+        }
+        
+        .benchmark-excellent { background-color: #4caf50; color: white; }
+        .benchmark-good { background-color: #8bc34a; color: white; }
+        .benchmark-average { background-color: #2196f3; color: white; }
+        .benchmark-below { background-color: #ff9800; color: white; }
+        .benchmark-poor { background-color: #f44336; color: white; }
+        
+        /* Performance Metrics */
+        .performance-metric {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        
+        .performance-metric:hover {
+            transform: translateY(-3px);
+        }
+        
+        .metric-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 2rem 0;
+        }
+        
+        .performance-distribution {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Action Plan */
+        .action-plan-step {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+            background: white;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .step-1 { border-left-color: #c62828; }
+        .step-2 { border-left-color: #d84315; }
+        .step-3 { border-left-color: #ef6c00; }
+        .step-4 { border-left-color: #689f38; }
+        .step-5 { border-left-color: #1976d2; }
+        
+        .timeline-item {
+            position: relative;
+            padding: 1rem 0 1rem 2rem;
+            border-left: 2px solid #3498db;
+            margin-bottom: 1rem;
+        }
+        
+        .timeline-item:before {
+            content: '';
+            position: absolute;
+            left: -7px;
+            top: 1.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #3498db;
+        }
+        
+        /* Shuffle Alert */
+        .shuffle-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 300px;
+            animation: slideInRight 0.5s ease;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* PDF Generation Modal */
+        .pdf-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .pdf-modal.active {
+            display: flex;
+        }
+        
+        .pdf-modal-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .pdf-progress {
+            margin: 2rem 0;
+        }
+        
+        .progress-animation {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .risk-matrix {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .domain-score-card {
+                padding: 1rem;
+            }
+            
+            .domain-score-value {
+                font-size: 2rem;
+            }
+            
+            .shuffle-alert {
+                position: relative;
+                top: 0;
+                right: 0;
+                max-width: 100%;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- PDF Generation Modal -->
+    <div class="pdf-modal" id="pdfModal">
+        <div class="pdf-modal-content">
+            <h4><i class="fas fa-file-pdf me-2"></i>Generating PDF Report</h4>
+            <div class="pdf-progress">
+                <div class="progress-animation"></div>
+                <p class="mt-3">Please wait while we generate your comprehensive report...</p>
+            </div>
+            <div class="alert alert-info">
+                <small><i class="fas fa-info-circle me-1"></i>This may take a few moments depending on your system.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <div class="header-section">
+        <div class="container text-center">
+            <h1 class="display-5 fw-bold">Advanced Business Risk Assessment</h1>
+            <p class="lead">Comprehensive 100-question assessment with random question selection</p>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container" id="app-container">
+        <!-- Introduction Section -->
+        <div class="question-container" id="intro-section">
+            <h2>Complete Business Risk & Performance Assessment</h2>
+            <p>This comprehensive assessment measures your business risk profile across <strong>100 randomly selected questions</strong> covering 10 critical domains with detailed performance analytics.</p>
+            
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h5>Key Features:</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-random text-primary me-2"></i> <strong>Random Question Selection</strong> - Different questions each time</li>
+                                <li><i class="fas fa-chart-line text-success me-2"></i> Domain Performance Scoring (1-10)</li>
+                                <li><i class="fas fa-balance-scale text-warning me-2"></i> Industry Benchmark Comparison</li>
+                                <li><i class="fas fa-tachometer-alt text-danger me-2"></i> Performance Level Ratings</li>
+                                <li><i class="fas fa-exclamation-triangle text-info me-2"></i> Critical Risk Identification</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-street-view text-primary me-2"></i> Strength & Weakness Analysis</li>
+                                <li><i class="fas fa-calendar-alt text-success me-2"></i> 90-Day Action Plan</li>
+                                <li><i class="fas fa-chart-pie text-warning me-2"></i> Performance Distribution Charts</li>
+                                <li><i class="fas fa-rocket text-danger me-2"></i> Priority-Based Risk Mitigation</li>
+                                <li><i class="fas fa-download text-info me-2"></i> Comprehensive PDF Report</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <p><strong>Randomized Assessment:</strong> Each time you take the assessment, 100 different questions are randomly selected from our pool of 200 questions to ensure fresh perspectives and prevent memorization.</p>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="alert alert-info">
+                        <i class="fas fa-random me-2"></i>
+                        <strong>Fresh Questions Every Time:</strong> 100 random questions selected from 200-question pool
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-bullseye me-2"></i>
+                        <strong>Action-Oriented Results:</strong> Priority-based action plan with clear timelines
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button class="btn btn-custom btn-lg" id="start-assessment">
+                    <i class="fas fa-play-circle me-2"></i> Begin Random Assessment (100 Questions)
+                </button>
+            </div>
+        </div>
+
+        <!-- Assessment Section (Hidden Initially) -->
+        <div class="hidden" id="assessment-section">
+            <!-- Progress Stats -->
+            <div class="completion-stats">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="question-counter">
+                            <span id="answered-count">0</span> of <span id="total-questions">100</span> questions answered
+                        </div>
+                        <div class="progress-container">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Assessment Progress</small>
+                                <small><span id="progress-percent">0</span>% Complete</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" id="assessment-progress" role="progressbar" style="width: 0%;" 
+                                     aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-custom" id="complete-assessment">
+                            <i class="fas fa-chart-bar me-1"></i> Generate Performance Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Question Display -->
+            <div class="question-container active" id="current-question-container">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h4 id="question-text">Loading question...</h4>
+                        <p class="text-muted mb-0" id="question-intent"></p>
+                    </div>
+                    <div class="text-end">
+                        <div class="sector-badge sector-1" id="current-sector">Domain 1</div>
+                        <div class="text-muted mt-1"><small>Question <span id="current-question-num">1</span>/100</small></div>
+                    </div>
+                </div>
+
+                <!-- Slider Response System -->
+                <div class="response-slider">
+                    <div class="slider-track"></div>
+                    <div class="slider-dots">
+                        <!-- 5 dots will be generated by JavaScript -->
+                    </div>
+                    <div class="slider-labels">
+                        <div class="slider-label">Strongly Disagree</div>
+                        <div class="slider-label">Disagree</div>
+                        <div class="slider-label">Neutral</div>
+                        <div class="slider-label">Agree</div>
+                        <div class="slider-label">Strongly Agree</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <p class="text-muted"><small>Select your response by clicking a dot above. Performance patterns will be analyzed.</small></p>
+                </div>
+            </div>
+
+            <!-- Question Navigation Dots -->
+            <div class="navigation-dots" id="question-nav-dots">
+                <!-- 100 navigation dots will be generated by JavaScript -->
+            </div>
+
+            <!-- Domain Section Headers -->
+            <div class="section-header hidden" id="sector-1-header">
+                <h5 class="mb-0"><i class="fas fa-chess-board me-2"></i>Domain 1: Strategic & Market Risk</h5>
+                <small class="text-muted">Long-term viability, competition, and industry shifts</small>
+            </div>
+            <div class="section-header hidden" id="sector-2-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Domain 2: Financial & Liquidity Risk</h5>
+                <small class="text-muted">Cash flow, debt, and financial reporting</small>
+            </div>
+            <div class="section-header hidden" id="sector-3-header">
+                <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Domain 3: Operational & Supply Chain Risk</h5>
+                <small class="text-muted">Production, logistics, and physical assets</small>
+            </div>
+            <div class="section-header hidden" id="sector-4-header">
+                <h5 class="mb-0"><i class="fas fa-gavel me-2"></i>Domain 4: Compliance, Legal & Regulatory Risk</h5>
+                <small class="text-muted">Laws, permits, and litigation</small>
+            </div>
+            <div class="section-header hidden" id="sector-5-header">
+                <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Domain 5: Technology & Cybersecurity Risk</h5>
+                <small class="text-muted">Data security, IT infrastructure, and software</small>
+            </div>
+            <div class="section-header hidden" id="sector-6-header">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Domain 6: Human Resources & Cultural Risk</h5>
+                <small class="text-muted">Staffing, morale, and internal culture</small>
+            </div>
+            <div class="section-header hidden" id="sector-7-header">
+                <h5 class="mb-0"><i class="fas fa-star me-2"></i>Domain 7: Reputational & Brand Risk</h5>
+                <small class="text-muted">Public perception and PR</small>
+            </div>
+            <div class="section-header hidden" id="sector-8-header">
+                <h5 class="mb-0"><i class="fas fa-leaf me-2"></i>Domain 8: ESG & Sustainability Risk</h5>
+                <small class="text-muted">Environmental, social, and governance factors</small>
+            </div>
+            <div class="section-header hidden" id="sector-9-header">
+                <h5 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i>Domain 9: Investment & Capital Risk</h5>
+                <small class="text-muted">Capital structure, valuation, and investor relations</small>
+            </div>
+            <div class="section-header hidden" id="sector-10-header">
+                <h5 class="mb-0"><i class="fas fa-globe me-2"></i>Domain 10: External & Macro Risk</h5>
+                <small class="text-muted">Factors outside company control</small>
+            </div>
+        </div>
+
+        <!-- Scorecard Section (Hidden Initially) -->
+        <div class="scorecard hidden" id="scorecard-section">
+            <h2 class="mb-4">Comprehensive Performance Assessment Results</h2>
+            
+            <!-- Overall Performance Summary -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Overall Performance Score</h5>
+                            <div class="display-4 fw-bold text-center my-3" id="overall-score">0</div>
+                            <div class="performance-rating performance-average" id="performance-rating-text">Average Performance</div>
+                            <p class="card-text mt-2" id="performance-description">Based on 100-question assessment</p>
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Risk Exposure</span>
+                                    <span id="risk-exposure">0%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-danger" id="risk-exposure-bar" role="progressbar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Performance Dashboard</h5>
+                            <div class="row mt-3">
+                                <div class="col-md-3 mb-3">
+                                    <div class="performance-metric">
+                                        <div class="metric-icon text-success">
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                        <div class="metric-value" id="metric-excellent">0</div>
+                                        <div class="metric-label">Excellent Domains</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="performance-metric">
+                                        <div class="metric-icon text-warning">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <div class="metric-value" id="metric-average">0.0</div>
+                                        <div class="metric-label">Avg Performance</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="performance-metric">
+                                        <div class="metric-icon text-danger">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </div>
+                                        <div class="metric-value" id="metric-critical">0</div>
+                                        <div class="metric-label">Critical Issues</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="performance-metric">
+                                        <div class="metric-icon text-info">
+                                            <i class="fas fa-bullseye"></i>
+                                        </div>
+                                        <div class="metric-value" id="metric-strengths">0</div>
+                                        <div class="metric-label">Key Strengths</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">Response Validity</h6>
+                                        <small class="text-muted">Based on completion and consistency</small>
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-success" id="validity-badge">High</span>
+                                    </div>
+                                </div>
+                                <div class="progress mt-2" style="height: 6px;">
+                                    <div class="progress-bar bg-success" id="validity-bar" role="progressbar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Distribution Chart -->
+            <div class="performance-distribution">
+                <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Performance Distribution Across Domains</h5>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Risk Matrix -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4 class="mb-3"><i class="fas fa-th me-2"></i>Performance Matrix</h4>
+                    <p class="text-muted mb-3">Domain performance visualization (Higher score = Better performance):</p>
+                    <div class="risk-matrix" id="risk-matrix">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Domain Performance Analysis -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4 class="mb-3"><i class="fas fa-analytics me-2"></i>Domain Performance Analysis</h4>
+                    <p class="text-muted mb-4">Detailed performance metrics for each domain:</p>
+                </div>
+                
+                <!-- Domain Cards will be populated by JavaScript -->
+                <div id="domain-scores-container" class="row"></div>
+            </div>
+
+            <!-- Performance Summary -->
+            <div class="row mb-4">
+                <div class="col-5">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-chart-bar me-2"></i>Performance Summary</h5>
+                            <div class="row mt-3">
+                                <div class="col-md-3 text-center mb-3">
+                                    <div class="mb-2">
+                                        <span class="badge bg-success fs-6">Strongest Domain</span>
+                                    </div>
+                                    <h4 id="strongest-domain">-</h4>
+                                    <p class="text-muted mb-0">Score: <span id="strongest-score">0</span>%</p>
+                                    <small class="text-success" id="strongest-benchmark">Above Industry</small>
+                                </div>
+                                <div class="col-md-3 text-center mb-3">
+                                    <div class="mb-2">
+                                        <span class="badge bg-danger fs-6">Weakest Domain</span>
+                                    </div>
+                                    <h4 id="weakest-domain">-</h4>
+                                    <p class="text-muted mb-0">Score: <span id="weakest-score">0</span>%</p>
+                                    <small class="text-danger" id="weakest-benchmark">Below Industry</small>
+                                </div>
+                                <div class="col-md-3 text-center mb-3">
+                                    <div class="mb-2">
+                                        <span class="badge bg-warning fs-6">Average Performance</span>
+                                    </div>
+                                    <h4 id="average-domain-score">0%</h4>
+                                    <p class="text-muted mb-0">Across all domains</p>
+                                    <small class="text-info" id="average-benchmark">Industry Level</small>
+                                </div>
+                                <div class="col-md-3 text-center mb-3">
+                                    <div class="mb-2">
+                                        <span class="badge bg-info fs-6">Improvement Needed</span>
+                                    </div>
+                                    <h4 id="improvement-count">0</h4>
+                                    <p class="text-muted mb-0">Domains below 60%</p>
+                                    <small class="text-warning">Immediate action required</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top 5 Critical Risks -->
+            <div class="top-risks">
+                <h4 class="mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Top 5 Priority Actions</h4>
+                <div id="top-risks-container">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Performance Gaps -->
+            <h4 class="mt-5 mb-3"><i class="fas fa-bullseye me-2"></i>Performance Improvement Areas</h4>
+            <div id="gaps-container">
+                <!-- Gap items will be populated by JavaScript -->
+            </div>
+
+            <!-- 90-Day Action Plan -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-calendar-check me-2"></i>90-Day Performance Improvement Plan</h5>
+                            <p class="text-muted mb-4">Prioritized actions based on your assessment results:</p>
+                            <div class="timeline-item">
+                                <h6>Month 1: Immediate Actions (Weeks 1-4)</h6>
+                                <div id="action-plan-month1">
+                                    <!-- Will be populated by JavaScript -->
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <h6>Month 2: Strategic Initiatives (Weeks 5-8)</h6>
+                                <div id="action-plan-month2">
+                                    <!-- Will be populated by JavaScript -->
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <h6>Month 3: Long-term Improvements (Weeks 9-12)</h6>
+                                <div id="action-plan-month3">
+                                    <!-- Will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Download/Share Section -->
+            <div class="mt-5 pt-4 border-top">
+                <h5><i class="fas fa-download me-2"></i>Save Your Performance Report</h5>
+                <p>Download your complete assessment results or share with your management team.</p>
+                <button class="btn btn-outline-primary me-2" id="download-pdf">
+                    <i class="fas fa-file-pdf me-1"></i> Download Full Report (PDF)
+                </button>
+                <button class="btn btn-outline-success me-2" id="download-action-plan">
+                    <i class="fas fa-clipboard-list me-1"></i> Download Action Plan (TXT)
+                </button>
+                <button class="btn btn-outline-info me-2" id="share-report">
+                    <i class="fas fa-share-alt me-1"></i> Share Summary
+                </button>
+                <button class="btn btn-outline-secondary" id="retake-assessment">
+                    <i class="fas fa-redo me-1"></i> Retake Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="container">
+        <div class="footer-note">
+            <p>This assessment randomly selects 100 different questions from a pool of 200 questions each time to ensure fresh perspectives and prevent memorization.</p>
+            <p class="mb-0">© 2025 Business Performance Assessment Tool. Comprehensive risk and performance evaluation instrument.<p><strong>Powered by INFOPACE MANAGEMENT PVT LTD.</strong></p></p>
+        </div>
+    </div>
+
+    <script>
+        // Function to get 100 random questions from the pool of 200
+        function getRandom100Questions() {
+            const allQuestions = [
+                // Domain 1: Strategic & Market Risk (Questions 1-20)
+                { id: 1, text: "There is a clear, documented 3-5 year strategic plan for the business.", sector: 1, weight: 1.4, reverseScored: false },
+                { id: 2, text: "The business model is reviewed quarterly against market trends and competitor activities.", sector: 1, weight: 1.3, reverseScored: false },
+                { id: 3, text: "The business relies on a single product or service for more than 50% of revenue.", sector: 1, weight: 1.5, reverseScored: true },
+                { id: 4, text: "There is a strong competitive moat or unique value proposition that prevents easy disruption.", sector: 1, weight: 1.4, reverseScored: false },
+                { id: 5, text: "Barriers to entry for new competitors in our industry are low.", sector: 1, weight: 1.3, reverseScored: true },
+                { id: 6, text: "The industry is currently facing aggressive price wars affecting profitability.", sector: 1, weight: 1.4, reverseScored: true },
+                { id: 7, text: "The business is highly sensitive to changes in consumer behavior or tastes.", sector: 1, weight: 1.2, reverseScored: true },
+                { id: 8, text: "There is a formal process for tracking competitor activities and market positioning.", sector: 1, weight: 1.2, reverseScored: false },
+                { id: 9, text: "The business is vulnerable to disruptive technology (e.g., AI replacing core services).", sector: 1, weight: 1.5, reverseScored: true },
+                { id: 10, text: "There are significant risks related to geographic location (geopolitical, environmental).", sector: 1, weight: 1.3, reverseScored: true },
+                { id: 11, text: "The market for our product/service is expanding rather than shrinking.", sector: 1, weight: 1.2, reverseScored: false },
+                { id: 12, text: "The business is highly dependent on specific intellectual property (IP).", sector: 1, weight: 1.4, reverseScored: true },
+                { id: 13, text: "Our IP is properly protected via patents, trademarks, or trade secrets.", sector: 1, weight: 1.3, reverseScored: false },
+                { id: 14, text: "There is a succession plan for the CEO and key executives.", sector: 1, weight: 1.2, reverseScored: false },
+                { id: 15, text: "There is a risk of 'key man dependency' where the business would fail if one person leaves.", sector: 1, weight: 1.5, reverseScored: true },
+                { id: 16, text: "The customer base is diversified with no single customer accounting for more than 20% of revenue.", sector: 1, weight: 1.4, reverseScored: false },
+                { id: 17, text: "Customer Acquisition Cost (CAC) is significantly lower than Customer Lifetime Value (LTV).", sector: 1, weight: 1.5, reverseScored: false },
+                { id: 18, text: "There are looming demographic shifts that could negatively impact our target market.", sector: 1, weight: 1.2, reverseScored: true },
+                { id: 19, text: "There is a clear 'Exit Strategy' for investors.", sector: 1, weight: 1.1, reverseScored: false },
+                { id: 20, text: "The company has a crisis management plan for negative publicity or social media crises.", sector: 1, weight: 1.3, reverseScored: false },
+
+                // Domain 2: Financial & Liquidity Risk (Questions 21-45)
+                { id: 21, text: "Audited financial statements are available for the last 3 years.", sector: 2, weight: 1.2, reverseScored: false },
+                { id: 22, text: "The current ratio (assets/liabilities) is above 1.5.", sector: 2, weight: 1.4, reverseScored: false },
+                { id: 23, text: "The business has enough cash reserves for 6 months of operations.", sector: 2, weight: 1.5, reverseScored: false },
+                { id: 24, text: "The Debt-to-Equity ratio is conservative (below 1:1).", sector: 2, weight: 1.4, reverseScored: false },
+                { id: 25, text: "There are loans at risk of 'covenant breach'.", sector: 2, weight: 1.5, reverseScored: true },
+                { id: 26, text: "A significant portion of debt is subject to variable interest rates.", sector: 2, weight: 1.3, reverseScored: true },
+                { id: 27, text: "There is a history of consistent profitability (positive EBITDA).", sector: 2, weight: 1.4, reverseScored: false },
+                { id: 28, text: "The burn rate is sustainable given current cash reserves.", sector: 2, weight: 1.5, reverseScored: false },
+                { id: 29, text: "Accounts receivable are aging properly (mostly under 60 days).", sector: 2, weight: 1.3, reverseScored: false },
+                { id: 30, text: "There is a high concentration of bad debt in receivables.", sector: 2, weight: 1.4, reverseScored: true },
+                { id: 31, text: "Past financial forecasts have been accurate compared to actual results.", sector: 2, weight: 1.2, reverseScored: false },
+                { id: 32, text: "There is a robust process for budgeting and variance analysis.", sector: 2, weight: 1.3, reverseScored: false },
+                { id: 33, text: "There are hidden liabilities (pending lawsuits, pension gaps).", sector: 2, weight: 1.5, reverseScored: true },
+                { id: 34, text: "Inflation significantly impacts the cost of goods sold.", sector: 2, weight: 1.3, reverseScored: true },
+                { id: 35, text: "The business can pass increased costs to customers without losing volume.", sector: 2, weight: 1.2, reverseScored: false },
+                { id: 36, text: "The business is exposed to foreign exchange (FX) currency risk.", sector: 2, weight: 1.3, reverseScored: true },
+                { id: 37, text: "Taxes are filed and paid on time in all jurisdictions.", sector: 2, weight: 1.4, reverseScored: false },
+                { id: 38, text: "There is a clear policy for capital expenditure (CapEx) approvals.", sector: 2, weight: 1.2, reverseScored: false },
+                { id: 39, text: "Petty cash and employee reimbursement are tightly controlled.", sector: 2, weight: 1.1, reverseScored: false },
+                { id: 40, text: "Internal controls are sufficient to prevent embezzlement or fraud.", sector: 2, weight: 1.4, reverseScored: false },
+                { id: 41, text: "Inventory turnover rate is optimal (capital not tied up in dead stock).", sector: 2, weight: 1.3, reverseScored: false },
+                { id: 42, text: "There is a 'Margin Squeeze' occurring due to rising supplier costs.", sector: 2, weight: 1.4, reverseScored: true },
+                { id: 43, text: "The business is dependent on government subsidies or tax breaks.", sector: 2, weight: 1.3, reverseScored: true },
+                { id: 44, text: "The company's valuation is based on realistic rather than speculative multiples.", sector: 2, weight: 1.2, reverseScored: false },
+                { id: 45, text: "There is a 'Rainy Day' fund for unforeseen market crashes.", sector: 2, weight: 1.3, reverseScored: false },
+
+                // Domain 3: Operational & Supply Chain Risk (Questions 46-70)
+                { id: 46, text: "The business relies on a single 'sole-source' supplier for critical components.", sector: 3, weight: 1.5, reverseScored: true },
+                { id: 47, text: "Primary suppliers are located in geopolitically stable regions.", sector: 3, weight: 1.3, reverseScored: false },
+                { id: 48, text: "Lead time for restocking critical inventory is reasonable and reliable.", sector: 3, weight: 1.2, reverseScored: false },
+                { id: 49, text: "There is a 'Business Continuity Plan' for supply chain failures.", sector: 3, weight: 1.4, reverseScored: false },
+                { id: 50, text: "Quality control checks are performed at every stage of production.", sector: 3, weight: 1.3, reverseScored: false },
+                { id: 51, text: "The historical 'defective product' rate is within acceptable limits.", sector: 3, weight: 1.4, reverseScored: false },
+                { id: 52, text: "Production facilities are owned rather than leased.", sector: 3, weight: 1.2, reverseScored: false },
+                { id: 53, text: "Machinery/equipment is reaching 'end-of-life' soon.", sector: 3, weight: 1.4, reverseScored: true },
+                { id: 54, text: "Operations experienced significant downtime in the last 12 months.", sector: 3, weight: 1.5, reverseScored: true },
+                { id: 55, text: "There are 'bottlenecks' in the current production process.", sector: 3, weight: 1.3, reverseScored: true },
+                { id: 56, text: "The company has adequate insurance for physical assets.", sector: 3, weight: 1.3, reverseScored: false },
+                { id: 57, text: "There is 'Just-in-Time' inventory risk (too little stock).", sector: 3, weight: 1.4, reverseScored: true },
+                { id: 58, text: "Logistics partners are reliable and diversified.", sector: 3, weight: 1.2, reverseScored: false },
+                { id: 59, text: "Warehouse 'shrinkage' or theft is a significant problem.", sector: 3, weight: 1.4, reverseScored: true },
+                { id: 60, text: "Facilities are compliant with local zoning and environmental laws.", sector: 3, weight: 1.5, reverseScored: false },
+                { id: 61, text: "The carbon footprint of operations represents an ESG risk.", sector: 3, weight: 1.3, reverseScored: true },
+                { id: 62, text: "There are backup utilities (generators, water) for the primary site.", sector: 3, weight: 1.2, reverseScored: false },
+                { id: 63, text: "The supply chain is transparent (no child labor/ethical sourcing issues).", sector: 3, weight: 1.4, reverseScored: false },
+                { id: 64, text: "Physical inventory is audited/counted regularly.", sector: 3, weight: 1.2, reverseScored: false },
+                { id: 65, text: "The company has adequate 'Product Liability' insurance.", sector: 3, weight: 1.3, reverseScored: false },
+                { id: 66, text: "Packaging design is susceptible to damage during shipping.", sector: 3, weight: 1.2, reverseScored: true },
+                { id: 67, text: "Seasonal fluctuations cause operational strain.", sector: 3, weight: 1.3, reverseScored: true },
+                { id: 68, text: "Production can be quickly scaled up or down as needed.", sector: 3, weight: 1.2, reverseScored: false },
+                { id: 69, text: "Maintenance schedules for equipment are strictly followed.", sector: 3, weight: 1.3, reverseScored: false },
+                { id: 70, text: "There is risk of 'Technological Obsolescence' in the production line.", sector: 3, weight: 1.4, reverseScored: true },
+
+                // Domain 4: Compliance, Legal & Regulatory Risk (Questions 71-90)
+                { id: 71, text: "The business has all necessary licenses and permits to operate.", sector: 4, weight: 1.5, reverseScored: false },
+                { id: 72, text: "There are ongoing or threatened lawsuits against the company.", sector: 4, weight: 1.5, reverseScored: true },
+                { id: 73, text: "The company is compliant with GDPR/CCPA or other data privacy laws.", sector: 4, weight: 1.4, reverseScored: false },
+                { id: 74, text: "There is a process to track changes in industry-specific regulations.", sector: 4, weight: 1.3, reverseScored: false },
+                { id: 75, text: "There is a formal 'Compliance Officer' or legal counsel on retainer.", sector: 4, weight: 1.2, reverseScored: false },
+                { id: 76, text: "All employee contracts are legally sound and up to date.", sector: 4, weight: 1.3, reverseScored: false },
+                { id: 77, text: "The business is in compliance with Anti-Money Laundering (AML) laws.", sector: 4, weight: 1.4, reverseScored: false },
+                { id: 78, text: "There are risks of 'Anti-Trust' or monopoly-related investigations.", sector: 4, weight: 1.5, reverseScored: true },
+                { id: 79, text: "There is a process for handling 'Whistleblower' complaints.", sector: 4, weight: 1.3, reverseScored: false },
+                { id: 80, text: "All independent contractors are correctly classified (vs. employees).", sector: 4, weight: 1.4, reverseScored: false },
+                { id: 81, text: "There is risk of intellectual property infringement against others.", sector: 4, weight: 1.5, reverseScored: true },
+                { id: 82, text: "There are pending environmental or safety inspections.", sector: 4, weight: 1.4, reverseScored: true },
+                { id: 83, text: "The company operates in 'High Risk' jurisdictions for corruption.", sector: 4, weight: 1.5, reverseScored: true },
+                { id: 84, text: "'Terms of Service' and 'Privacy Policies' are reviewed annually.", sector: 4, weight: 1.2, reverseScored: false },
+                { id: 85, text: "There is a record of all health and safety (OSHA) incidents.", sector: 4, weight: 1.3, reverseScored: false },
+                { id: 86, text: "There are 'Export Control' or trade sanction risks.", sector: 4, weight: 1.4, reverseScored: true },
+                { id: 87, text: "Document retention and destruction are properly managed.", sector: 4, weight: 1.2, reverseScored: false },
+                { id: 88, text: "Board meeting minutes and corporate records are kept up to date.", sector: 4, weight: 1.1, reverseScored: false },
+                { id: 89, text: "The company is compliant with local 'Fair Labor' and wage laws.", sector: 4, weight: 1.4, reverseScored: false },
+                { id: 90, text: "There are 'Non-Compete' or 'Non-Solicit' agreements at risk.", sector: 4, weight: 1.3, reverseScored: true },
+
+                // Domain 5: Technology & Cybersecurity Risk (Questions 91-110)
+                { id: 91, text: "There is a Chief Information Security Officer (CISO) or equivalent.", sector: 5, weight: 1.3, reverseScored: false },
+                { id: 92, text: "Multi-Factor Authentication (MFA) is required for all systems.", sector: 5, weight: 1.4, reverseScored: false },
+                { id: 93, text: "'Penetration Tests' or vulnerability scans are performed regularly.", sector: 5, weight: 1.4, reverseScored: false },
+                { id: 94, text: "Data is encrypted both 'at rest' and 'in transit'.", sector: 5, weight: 1.5, reverseScored: false },
+                { id: 95, text: "Data backups are performed and tested regularly.", sector: 5, weight: 1.5, reverseScored: false },
+                { id: 96, text: "There is a formal 'Incident Response Plan' for data breaches.", sector: 5, weight: 1.4, reverseScored: false },
+                { id: 97, text: "The company has Cyber Insurance coverage.", sector: 5, weight: 1.3, reverseScored: false },
+                { id: 98, text: "Employees are trained regularly on 'Phishing' and social engineering.", sector: 5, weight: 1.3, reverseScored: false },
+                { id: 99, text: "There is a 'Disaster Recovery' site for IT systems.", sector: 5, weight: 1.4, reverseScored: false },
+                { id: 100, text: "A significant portion of core software is 'Legacy' (unsupported).", sector: 5, weight: 1.5, reverseScored: true },
+                { id: 101, text: "There is risk of 'Vendor Lock-in' with cloud providers.", sector: 5, weight: 1.3, reverseScored: true },
+                { id: 102, text: "The company owns the source code for its proprietary software.", sector: 5, weight: 1.4, reverseScored: false },
+                { id: 103, text: "Security patches and updates are applied automatically.", sector: 5, weight: 1.4, reverseScored: false },
+                { id: 104, text: "Access to sensitive data (PII) is properly restricted.", sector: 5, weight: 1.5, reverseScored: false },
+                { id: 105, text: "There is a 'Bring Your Own Device' (BYOD) policy in place.", sector: 5, weight: 1.2, reverseScored: false },
+                { id: 106, text: "Third-party APIs are monitored for security and uptime.", sector: 5, weight: 1.3, reverseScored: false },
+                { id: 107, text: "There is a 'Shadow IT' problem (employees using unapproved apps).", sector: 5, weight: 1.4, reverseScored: true },
+                { id: 108, text: "Operations could be restored quickly after a total system wipe.", sector: 5, weight: 1.5, reverseScored: false },
+                { id: 109, text: "Physical servers are in a secure, climate-controlled room.", sector: 5, weight: 1.3, reverseScored: false },
+                { id: 110, text: "AI tools used might leak proprietary data.", sector: 5, weight: 1.4, reverseScored: true },
+
+                // Domain 6: Human Resources & Cultural Risk (Questions 111-130)
+                { id: 111, text: "Annual employee turnover rate is within industry norms.", sector: 6, weight: 1.4, reverseScored: false },
+                { id: 112, text: "Employee satisfaction ratings (e.g., Glassdoor) are positive.", sector: 6, weight: 1.3, reverseScored: false },
+                { id: 113, text: "Key salaries are competitive with the current market.", sector: 6, weight: 1.3, reverseScored: false },
+                { id: 114, text: "There are many 'unfilled' critical roles.", sector: 6, weight: 1.4, reverseScored: true },
+                { id: 115, text: "The leadership team is diverse in background and perspective.", sector: 6, weight: 1.2, reverseScored: false },
+                { id: 116, text: "There is a documented 'Code of Conduct' that is enforced.", sector: 6, weight: 1.3, reverseScored: false },
+                { id: 117, text: "Performance reviews are conducted consistently and fairly.", sector: 6, weight: 1.2, reverseScored: false },
+                { id: 118, text: "There is a culture where mistakes can be admitted without fear.", sector: 6, weight: 1.3, reverseScored: false },
+                { id: 119, text: "Employees are required to take mandatory vacations (to detect fraud).", sector: 6, weight: 1.2, reverseScored: false },
+                { id: 120, text: "There is risk of labor strikes or union-related disruptions.", sector: 6, weight: 1.5, reverseScored: true },
+                { id: 121, text: "Internal communication systems are effective.", sector: 6, weight: 1.2, reverseScored: false },
+                { id: 122, text: "There are clear 'Job Descriptions' for every role.", sector: 6, weight: 1.2, reverseScored: false },
+                { id: 123, text: "'Cross-Training' is practiced to prevent single-point-of-failure roles.", sector: 6, weight: 1.3, reverseScored: false },
+                { id: 124, text: "Background checks are performed on all new hires.", sector: 6, weight: 1.3, reverseScored: false },
+                { id: 125, text: "There are formal 'Onboarding' and 'Offboarding' processes.", sector: 6, weight: 1.2, reverseScored: false },
+                { id: 126, text: "Bonuses and incentives are aligned with company goals.", sector: 6, weight: 1.2, reverseScored: false },
+                { id: 127, text: "There are signs of 'Burnout' among the executive team.", sector: 6, weight: 1.4, reverseScored: true },
+                { id: 128, text: "The company culture is resistant to change or new technology.", sector: 6, weight: 1.3, reverseScored: true },
+                { id: 129, text: "Remote/hybrid work policies are clearly defined and effective.", sector: 6, weight: 1.2, reverseScored: false },
+                { id: 130, text: "There is a plan for 'Workforce Reduction' if needed.", sector: 6, weight: 1.3, reverseScored: false },
+
+                // Domain 7: Reputational & Brand Risk (Questions 131-145)
+                { id: 131, text: "A major product recall would significantly damage the brand.", sector: 7, weight: 1.5, reverseScored: true },
+                { id: 132, text: "There is a 'Social Media Policy' for employees.", sector: 7, weight: 1.2, reverseScored: false },
+                { id: 133, text: "Historical 'PR scandals' still negatively affect the brand.", sector: 7, weight: 1.4, reverseScored: true },
+                { id: 134, text: "The company responds effectively to negative online reviews.", sector: 7, weight: 1.3, reverseScored: false },
+                { id: 135, text: "The brand name is at risk of being 'genericized'.", sector: 7, weight: 1.3, reverseScored: true },
+                { id: 136, text: "The company engages in 'Greenwashing' that could backfire.", sector: 7, weight: 1.4, reverseScored: true },
+                { id: 137, text: "Celebrity endorsers or influencers are vetted for personal risk.", sector: 7, weight: 1.3, reverseScored: false },
+                { id: 138, text: "The brand is perceived positively compared to top competitors.", sector: 7, weight: 1.3, reverseScored: false },
+                { id: 139, text: "There is a 'Crisis Management' team ready for 24/7 response.", sector: 7, weight: 1.4, reverseScored: false },
+                { id: 140, text: "The company monitors 'Brand Sentiment' across the web.", sector: 7, weight: 1.2, reverseScored: false },
+                { id: 141, text: "The company's 'Purpose' or 'Mission' is widely understood by customers.", sector: 7, weight: 1.2, reverseScored: false },
+                { id: 142, text: "The company's political or social stances are alienating customers.", sector: 7, weight: 1.4, reverseScored: true },
+                { id: 143, text: "The brand is vulnerable to 'Cancel Culture'.", sector: 7, weight: 1.4, reverseScored: true },
+                { id: 144, text: "There is risk of 'Counterfeit' products damaging the brand.", sector: 7, weight: 1.3, reverseScored: true },
+                { id: 145, text: "The company's website and online presence are modern and trustworthy.", sector: 7, weight: 1.2, reverseScored: false },
+
+                // Domain 8: ESG & Sustainability Risk (Questions 146-160)
+                { id: 146, text: "The company has a strong 'ESG Rating' from third parties.", sector: 8, weight: 1.3, reverseScored: false },
+                { id: 147, text: "There are risks of environmental fines (waste, emissions).", sector: 8, weight: 1.5, reverseScored: true },
+                { id: 148, text: "The company actively manages water and energy consumption.", sector: 8, weight: 1.3, reverseScored: false },
+                { id: 149, text: "There is an effective 'Diversity, Equity, and Inclusion' (DEI) program.", sector: 8, weight: 1.2, reverseScored: false },
+                { id: 150, text: "The Board of Directors is independent from the CEO.", sector: 8, weight: 1.3, reverseScored: false },
+                { id: 151, text: "There are 'Related-Party Transactions' (business with family members).", sector: 8, weight: 1.4, reverseScored: true },
+                { id: 152, text: "There is a clear 'Anti-Bribery and Corruption' policy.", sector: 8, weight: 1.4, reverseScored: false },
+                { id: 153, text: "The company audits its own ethical standards regularly.", sector: 8, weight: 1.3, reverseScored: false },
+                { id: 154, text: "A 'Sustainability Report' is published annually.", sector: 8, weight: 1.2, reverseScored: false },
+                { id: 155, text: "There are risks associated with 'Climate Change' (e.g., rising sea levels).", sector: 8, weight: 1.4, reverseScored: true },
+                { id: 156, text: "The company sources from 'Conflict Zones'.", sector: 8, weight: 1.5, reverseScored: true },
+                { id: 157, text: "The company promotes good 'Work-Life Balance'.", sector: 8, weight: 1.2, reverseScored: false },
+                { id: 158, text: "Executive pay packages are transparent and fair.", sector: 8, weight: 1.3, reverseScored: false },
+                { id: 159, text: "The company contributes positively to the local community.", sector: 8, weight: 1.2, reverseScored: false },
+                { id: 160, text: "The company is prepared for future 'Carbon Taxes'.", sector: 8, weight: 1.3, reverseScored: false },
+
+                // Domain 9: Investment & Capital Risk (Questions 161-180)
+                { id: 161, text: "The 'Cap Table' (ownership structure) is clean, not overly diluted.", sector: 9, weight: 1.3, reverseScored: false },
+                { id: 162, text: "There are 'Preferred Shares' with aggressive liquidation preferences.", sector: 9, weight: 1.4, reverseScored: true },
+                { id: 163, text: "The 'Post-Money Valuation' is reasonable compared to actual revenue.", sector: 9, weight: 1.4, reverseScored: false },
+                { id: 164, text: "The investment is 'Illiquid' (cannot be sold for a long time).", sector: 9, weight: 1.3, reverseScored: true },
+                { id: 165, text: "There are 'Anti-Dilution' clauses for current investors.", sector: 9, weight: 1.3, reverseScored: true },
+                { id: 166, text: "The company has sufficient 'Runway' at current burn rate.", sector: 9, weight: 1.5, reverseScored: false },
+                { id: 167, text: "Expected 'Return on Investment' (ROI) is realistic.", sector: 9, weight: 1.3, reverseScored: false },
+                { id: 168, text: "There are 'Drag-Along' or 'Tag-Along' rights in shareholder agreements.", sector: 9, weight: 1.2, reverseScored: false },
+                { id: 169, text: "Founders have significant 'Skin in the Game' (own money invested).", sector: 9, weight: 1.3, reverseScored: false },
+                { id: 170, text: "Financial due diligence revealed significant 'Red Flags'.", sector: 9, weight: 1.5, reverseScored: true },
+                { id: 171, text: "The company may need a 'Down Round' (lower valuation than before).", sector: 9, weight: 1.5, reverseScored: true },
+                { id: 172, text: "There are 'Contingent Liabilities' that could wipe out equity.", sector: 9, weight: 1.5, reverseScored: true },
+                { id: 173, text: "There is a clear 'Dividend Policy'.", sector: 9, weight: 1.2, reverseScored: false },
+                { id: 174, text: "It would be easy to raise more capital if needed.", sector: 9, weight: 1.3, reverseScored: false },
+                { id: 175, text: "Lead investors are reputable and experienced in this sector.", sector: 9, weight: 1.3, reverseScored: false },
+                { id: 176, text: "Investors have appropriate 'Governance Rights' (e.g., board seat).", sector: 9, weight: 1.2, reverseScored: false },
+                { id: 177, text: "There is a 'Lock-up Period' for founders/early employees.", sector: 9, weight: 1.2, reverseScored: false },
+                { id: 178, text: "'Customer Concentration' risk is high for investors.", sector: 9, weight: 1.4, reverseScored: true },
+                { id: 179, text: "The company has a complete 'Data Room' with all legal documents.", sector: 9, weight: 1.3, reverseScored: false },
+                { id: 180, text: "The 'Investment Thesis' remains valid in current market conditions.", sector: 9, weight: 1.4, reverseScored: false },
+
+                // Domain 10: External & Macro Risk (Questions 181-200)
+                { id: 181, text: "A rise in central bank interest rates would significantly affect the business.", sector: 10, weight: 1.4, reverseScored: true },
+                { id: 182, text: "The business is 'Recession-Proof' rather than highly 'Cyclical'.", sector: 10, weight: 1.3, reverseScored: false },
+                { id: 183, text: "New 'Tariffs' or 'Trade Barriers' are on the horizon.", sector: 10, weight: 1.4, reverseScored: true },
+                { id: 184, text: "There is 'Geopolitical Instability' in primary markets.", sector: 10, weight: 1.5, reverseScored: true },
+                { id: 185, text: "Inflation affects customer purchasing power significantly.", sector: 10, weight: 1.3, reverseScored: true },
+                { id: 186, text: "There is a 'Labor Shortage' in the industry.", sector: 10, weight: 1.3, reverseScored: true },
+                { id: 187, text: "The business is vulnerable to 'Global Pandemics' or health crises.", sector: 10, weight: 1.4, reverseScored: true },
+                { id: 188, text: "'Urbanization' or 'De-urbanization' trends affect the business.", sector: 10, weight: 1.2, reverseScored: true },
+                { id: 189, text: "The business is dependent on 'Government Contracts'.", sector: 10, weight: 1.4, reverseScored: true },
+                { id: 190, text: "There are 'Power Grid' or 'Internet Infrastructure' risks.", sector: 10, weight: 1.3, reverseScored: true },
+                { id: 191, text: "'Social Media' volatility impacts stock/valuation.", sector: 10, weight: 1.3, reverseScored: true },
+                { id: 192, text: "The business is at risk from 'Natural Disasters'.", sector: 10, weight: 1.4, reverseScored: true },
+                { id: 193, text: "There are 'Demographic Risks' (e.g., aging population).", sector: 10, weight: 1.3, reverseScored: true },
+                { id: 194, text: "'Currency Devaluation' impacts overseas profits.", sector: 10, weight: 1.4, reverseScored: true },
+                { id: 195, text: "The 'Political Climate' is favorable for this business sector.", sector: 10, weight: 1.3, reverseScored: false },
+                { id: 196, text: "Changes in 'Tax Laws' could significantly impact the business.", sector: 10, weight: 1.4, reverseScored: true },
+                { id: 197, text: "The business is subject to 'Price Controls' by government.", sector: 10, weight: 1.5, reverseScored: true },
+                { id: 198, text: "'Migration/Immigration' changes impact the labor pool.", sector: 10, weight: 1.3, reverseScored: true },
+                { id: 199, text: "The business is vulnerable to 'Global Supply Chain' shocks.", sector: 10, weight: 1.5, reverseScored: true },
+                { id: 200, text: "There is a likely 'Black Swan' event that could severely impact the business.", sector: 10, weight: 1.5, reverseScored: true }
+            ];
+
+            // Fisher-Yates shuffle algorithm
+            function shuffleArray(array) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+
+            // Shuffle all 200 questions
+            const shuffledAllQuestions = shuffleArray(allQuestions);
+            
+            // Take first 100 questions
+            return shuffledAllQuestions.slice(0, 100);
+        }
+
+        // Domain information with enhanced performance metrics
+        const domainInfo = {
+            1: { 
+                name: "Strategic & Market", 
+                fullName: "Strategic & Market Risk",
+                color: "#2980b9",
+                weight: 0.10,
+                description: "Long-term viability, competition, and industry shifts",
+                icon: "fas fa-chess-board"
+            },
+            2: { 
+                name: "Financial", 
+                fullName: "Financial & Liquidity Risk",
+                color: "#27ae60",
+                weight: 0.10,
+                description: "Cash flow, debt, and financial reporting",
+                icon: "fas fa-chart-line"
+            },
+            3: { 
+                name: "Operational", 
+                fullName: "Operational & Supply Chain Risk",
+                color: "#f39c12",
+                weight: 0.10,
+                description: "Production, logistics, and physical assets",
+                icon: "fas fa-cogs"
+            },
+            4: { 
+                name: "Compliance", 
+                fullName: "Compliance, Legal & Regulatory Risk",
+                color: "#c2185b",
+                weight: 0.10,
+                description: "Laws, permits, and litigation",
+                icon: "fas fa-gavel"
+            },
+            5: { 
+                name: "Cybersecurity", 
+                fullName: "Technology & Cybersecurity Risk",
+                color: "#3949ab",
+                weight: 0.10,
+                description: "Data security, IT infrastructure, and software",
+                icon: "fas fa-shield-alt"
+            },
+            6: { 
+                name: "HR & Culture", 
+                fullName: "Human Resources & Cultural Risk",
+                color: "#00796b",
+                weight: 0.10,
+                description: "Staffing, morale, and internal culture",
+                icon: "fas fa-users"
+            },
+            7: { 
+                name: "Reputational", 
+                fullName: "Reputational & Brand Risk",
+                color: "#ef6c00",
+                weight: 0.10,
+                description: "Public perception and PR",
+                icon: "fas fa-star"
+            },
+            8: { 
+                name: "ESG", 
+                fullName: "ESG & Sustainability Risk",
+                color: "#7b1fa2",
+                weight: 0.10,
+                description: "Environmental, social, and governance factors",
+                icon: "fas fa-leaf"
+            },
+            9: { 
+                name: "Investment", 
+                fullName: "Investment & Capital Risk",
+                color: "#c2185b",
+                weight: 0.10,
+                description: "Capital structure, valuation, and investor relations",
+                icon: "fas fa-hand-holding-usd"
+            },
+            10: { 
+                name: "External", 
+                fullName: "External & Macro Risk",
+                color: "#616161",
+                weight: 0.10,
+                description: "Factors outside company control",
+                icon: "fas fa-globe"
+            }
+        };
+
+        // Industry benchmark scores
+        const industryBenchmarks = {
+            1: 65,  // Strategic & Market
+            2: 70,  // Financial
+            3: 68,  // Operational
+            4: 75,  // Compliance
+            5: 72,  // Cybersecurity
+            6: 60,  // HR & Culture
+            7: 63,  // Reputational
+            8: 55,  // ESG
+            9: 58,  // Investment
+            10: 62  // External
+        };
+
+        // Performance level thresholds
+        const performanceThresholds = {
+            excellent: 85,
+            good: 70,
+            average: 60,
+            poor: 40,
+            critical: 30
+        };
+
+        // App state
+        let currentQuestionIndex = 0;
+        let userResponses = {};
+        let domainScores = {};
+        let criticalRisks = [];
+        let overallPerformance = {};
+        let currentRandomQuestions = [];
+
+        // DOM Elements
+        const introSection = document.getElementById('intro-section');
+        const assessmentSection = document.getElementById('assessment-section');
+        const scorecardSection = document.getElementById('scorecard-section');
+        const pdfModal = document.getElementById('pdfModal');
+        const startBtn = document.getElementById('start-assessment');
+        const completeBtn = document.getElementById('complete-assessment');
+        const questionText = document.getElementById('question-text');
+        const currentSectorSpan = document.getElementById('current-sector');
+        const currentQuestionNum = document.getElementById('current-question-num');
+        const answeredCount = document.getElementById('answered-count');
+        const totalQuestionsSpan = document.getElementById('total-questions');
+        const progressBar = document.getElementById('assessment-progress');
+        const progressPercent = document.getElementById('progress-percent');
+        const questionNavDots = document.getElementById('question-nav-dots');
+        const sliderDotsContainer = document.querySelector('.slider-dots');
+
+        // Initialize the assessment with random 100 questions
+        function initAssessment() {
+            userResponses = {};
+            domainScores = {};
+            criticalRisks = [];
+            overallPerformance = {};
+            currentQuestionIndex = 0;
+            
+            // Get 100 random questions
+            currentRandomQuestions = getRandom100Questions();
+            
+            totalQuestionsSpan.textContent = currentRandomQuestions.length;
+            updateProgress();
+            showQuestion(currentQuestionIndex);
+            createNavigationDots();
+            
+            showDomainHeader(currentRandomQuestions[0].sector);
+            
+            // Show random selection notification
+            showRandomSelectionNotification();
+        }
+
+        // Show random selection notification
+        function showRandomSelectionNotification() {
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-info alert-dismissible fade show shuffle-alert';
+            notification.innerHTML = `
+                <i class="fas fa-random me-2"></i>
+                <strong>Random Questions Selected!</strong> 100 different questions chosen from our pool of 200 questions.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Add to container
+            const container = document.getElementById('app-container');
+            container.insertBefore(notification, container.firstChild);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
+
+        // Create navigation dots
+        function createNavigationDots() {
+            questionNavDots.innerHTML = '';
+            
+            for (let i = 0; i < currentRandomQuestions.length; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'nav-dot';
+                dot.dataset.index = i;
+                dot.title = `Question ${i + 1}: Domain ${currentRandomQuestions[i].sector}`;
+                
+                const sector = currentRandomQuestions[i].sector;
+                dot.style.border = `2px solid ${domainInfo[sector].color}`;
+                
+                dot.addEventListener('click', () => {
+                    navigateToQuestion(i);
+                });
+                
+                questionNavDots.appendChild(dot);
+            }
+        }
+
+        // Show question at index
+        function showQuestion(index) {
+            if (index < 0 || index >= currentRandomQuestions.length) return;
+            
+            currentQuestionIndex = index;
+            const question = currentRandomQuestions[index];
+            
+            questionText.textContent = question.text;
+            
+            const domain = domainInfo[question.sector];
+            currentSectorSpan.textContent = domain.name;
+            currentSectorSpan.className = `sector-badge sector-${question.sector}`;
+            currentSectorSpan.style.borderColor = domain.color;
+            currentSectorSpan.style.color = domain.color;
+            currentSectorSpan.style.backgroundColor = domain.color + '20';
+            
+            currentQuestionNum.textContent = index + 1;
+            
+            showDomainHeader(question.sector);
+            createSliderDots(question);
+            updateNavigationDots();
+            updateProgress();
+        }
+
+        // Show/hide domain headers
+        function showDomainHeader(sector) {
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach(s => {
+                const header = document.getElementById(`sector-${s}-header`);
+                if (header) header.classList.add('hidden');
+            });
+            
+            const header = document.getElementById(`sector-${sector}-header`);
+            if (header) header.classList.remove('hidden');
+        }
+
+        // Create slider dots for current question
+        function createSliderDots(question) {
+            sliderDotsContainer.innerHTML = '';
+            
+            const labels = ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"];
+            const colors = ["#e74c3c", "#f39c12", "#3498db", "#3498db", "#27ae60"];
+            
+            for (let i = 0; i < 5; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'slider-dot';
+                dot.dataset.value = i + 1;
+                dot.textContent = i + 1;
+                dot.style.borderColor = colors[i];
+                dot.title = labels[i];
+                
+                if (userResponses[question.id] === (i + 1)) {
+                    dot.classList.add('active');
+                    dot.style.background = colors[i];
+                    dot.style.color = 'white';
+                }
+                
+                dot.addEventListener('click', () => {
+                    document.querySelectorAll('.slider-dot').forEach(el => {
+                        el.classList.remove('active');
+                        el.style.background = 'white';
+                        el.style.color = '#666';
+                    });
+                    
+                    dot.classList.add('active');
+                    dot.style.background = colors[i];
+                    dot.style.color = 'white';
+                    
+                    const responseValue = parseInt(dot.dataset.value);
+                    userResponses[question.id] = responseValue;
+                    
+                    updateNavigationDots();
+                    updateProgress();
+                    
+                    setTimeout(() => {
+                        if (currentQuestionIndex < currentRandomQuestions.length - 1) {
+                            navigateToQuestion(currentQuestionIndex + 1);
+                        }
+                    }, 300);
+                });
+                
+                sliderDotsContainer.appendChild(dot);
+            }
+        }
+
+        // Update navigation dots
+        function updateNavigationDots() {
+            const dots = document.querySelectorAll('.nav-dot');
+            dots.forEach((dot, index) => {
+                const questionId = currentRandomQuestions[index].id;
+                
+                dot.classList.remove('active');
+                
+                if (userResponses[questionId]) {
+                    dot.classList.add('answered');
+                } else {
+                    dot.classList.remove('answered');
+                }
+                
+                if (index === currentQuestionIndex) {
+                    dot.classList.add('active');
+                }
+            });
+            
+            const answered = Object.keys(userResponses).length;
+            answeredCount.textContent = answered;
+        }
+
+        // Update progress
+        function updateProgress() {
+            const answered = Object.keys(userResponses).length;
+            const progress = (answered / currentRandomQuestions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressPercent.textContent = Math.round(progress);
+            
+            completeBtn.disabled = answered < currentRandomQuestions.length * 0.7;
+        }
+
+        // Navigate to specific question
+        function navigateToQuestion(index) {
+            if (index >= 0 && index < currentRandomQuestions.length) {
+                document.getElementById('current-question-container').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                
+                showQuestion(index);
+            }
+        }
+
+        // Complete assessment and show results
+        function completeAssessment() {
+            const answered = Object.keys(userResponses).length;
+            if (answered < currentRandomQuestions.length * 0.7) {
+                if (!confirm(`You have answered ${answered} of ${currentRandomQuestions.length} questions. Minimum 70% completion required for accurate assessment. Continue anyway?`)) {
+                    return;
+                }
+            }
+            
+            assessmentSection.classList.add('hidden');
+            scorecardSection.classList.remove('hidden');
+            
+            window.scrollTo(0, 0);
+            
+            calculateScores();
+        }
+
+        // Calculate scores with enhanced performance analysis
+        function calculateScores() {
+            // Initialize domain scores
+            for (let i = 1; i <= 10; i++) {
+                domainScores[i] = {
+                    rawScore: 0,
+                    maxScore: 0,
+                    percentage: 0,
+                    performanceScore: 0, // 1-10 scale
+                    performanceLevel: "unknown",
+                    riskLevel: "unknown",
+                    strengths: 0,
+                    weaknesses: 0,
+                    criticalIssues: [],
+                    improvementAreas: [],
+                    benchmarkComparison: "average",
+                    benchmarkDiff: 0,
+                    industryBenchmark: industryBenchmarks[i],
+                    weight: domainInfo[i].weight
+                };
+            }
+            
+            // Calculate scores for each question
+            currentRandomQuestions.forEach(question => {
+                if (userResponses[question.id] !== undefined) {
+                    const response = userResponses[question.id];
+                    let score = 0;
+                    
+                    // Convert response to 0-100 scale
+                    switch(response) {
+                        case 1: score = 0; break;
+                        case 2: score = 25; break;
+                        case 3: score = 50; break;
+                        case 4: score = 75; break;
+                        case 5: score = 100; break;
+                    }
+                    
+                    // Apply reverse scoring
+                    if (question.reverseScored) {
+                        score = 100 - score;
+                    }
+                    
+                    // Add to domain totals
+                    const domain = domainScores[question.sector];
+                    domain.rawScore += score;
+                    domain.maxScore += 100;
+                    
+                    // Track strengths and weaknesses
+                    if (score >= 80) domain.strengths++;
+                    if (score <= 40) domain.weaknesses++;
+                    
+                    // Track critical issues
+                    if (score < 30) {
+                        domain.criticalIssues.push({
+                            id: question.id,
+                            text: question.text,
+                            score: score,
+                            weight: question.weight
+                        });
+                        criticalRisks.push({
+                            domain: question.sector,
+                            question: question,
+                            score: score
+                        });
+                    }
+                    
+                    // Track improvement areas
+                    if (score < 60) {
+                        domain.improvementAreas.push({
+                            id: question.id,
+                            text: question.text,
+                            score: score
+                        });
+                    }
+                }
+            });
+            
+            // Calculate domain percentages and performance metrics
+            let totalWeightedScore = 0;
+            let totalMaxScore = 0;
+            let totalDomains = 0;
+            let excellentCount = 0;
+            let goodCount = 0;
+            let averageCount = 0;
+            let poorCount = 0;
+            let criticalCount = 0;
+            let totalStrengths = 0;
+            let totalWeaknesses = 0;
+            let totalCriticalIssues = 0;
+            
+            for (let i = 1; i <= 10; i++) {
+                const domain = domainScores[i];
+                if (domain.maxScore > 0) {
+                    // Calculate percentage
+                    domain.percentage = Math.round((domain.rawScore / domain.maxScore) * 100);
+                    
+                    // Calculate performance score (1-10 scale)
+                    domain.performanceScore = Math.max(1, Math.round((domain.percentage / 100) * 10));
+                    
+                    // Compare with industry benchmark
+                    domain.benchmarkDiff = domain.percentage - domain.industryBenchmark;
+                    
+                    if (domain.benchmarkDiff > 10) domain.benchmarkComparison = "excellent";
+                    else if (domain.benchmarkDiff > 5) domain.benchmarkComparison = "good";
+                    else if (domain.benchmarkDiff > -5) domain.benchmarkComparison = "average";
+                    else if (domain.benchmarkDiff > -10) domain.benchmarkComparison = "below";
+                    else domain.benchmarkComparison = "poor";
+                    
+                    // Determine performance level
+                    if (domain.percentage >= performanceThresholds.excellent) {
+                        domain.performanceLevel = "excellent";
+                        domain.riskLevel = "very-low";
+                        excellentCount++;
+                    } else if (domain.percentage >= performanceThresholds.good) {
+                        domain.performanceLevel = "good";
+                        domain.riskLevel = "low";
+                        goodCount++;
+                    } else if (domain.percentage >= performanceThresholds.average) {
+                        domain.performanceLevel = "average";
+                        domain.riskLevel = "medium";
+                        averageCount++;
+                    } else if (domain.percentage >= performanceThresholds.poor) {
+                        domain.performanceLevel = "poor";
+                        domain.riskLevel = "high";
+                        poorCount++;
+                    } else {
+                        domain.performanceLevel = "very-poor";
+                        domain.riskLevel = "critical";
+                        criticalCount++;
+                    }
+                    
+                    // Update totals
+                    totalWeightedScore += domain.percentage * domain.weight;
+                    totalMaxScore += 100 * domain.weight;
+                    totalDomains++;
+                    totalStrengths += domain.strengths;
+                    totalWeaknesses += domain.weaknesses;
+                    totalCriticalIssues += domain.criticalIssues.length;
+                }
+            }
+            
+            // Calculate overall performance
+            const overallPercentage = Math.round((totalWeightedScore / totalMaxScore) * 100);
+            const overallPerformanceScore = Math.max(1, Math.round((overallPercentage / 100) * 10));
+            
+            // Determine overall performance level
+            let overallPerformanceLevel, overallRiskLevel, performanceDescription;
+            if (overallPercentage >= performanceThresholds.excellent) {
+                overallPerformanceLevel = "excellent";
+                overallRiskLevel = "very-low";
+                performanceDescription = "Outstanding performance across all domains";
+            } else if (overallPercentage >= performanceThresholds.good) {
+                overallPerformanceLevel = "good";
+                overallRiskLevel = "low";
+                performanceDescription = "Strong performance with minor improvement areas";
+            } else if (overallPercentage >= performanceThresholds.average) {
+                overallPerformanceLevel = "average";
+                overallRiskLevel = "medium";
+                performanceDescription = "Moderate performance with several improvement opportunities";
+            } else if (overallPercentage >= performanceThresholds.poor) {
+                overallPerformanceLevel = "poor";
+                overallRiskLevel = "high";
+                performanceDescription = "Significant improvement needed in multiple areas";
+            } else {
+                overallPerformanceLevel = "very-poor";
+                overallRiskLevel = "critical";
+                performanceDescription = "Immediate action required across most domains";
+            }
+            
+            // Store overall performance
+            overallPerformance = {
+                percentage: overallPercentage,
+                performanceScore: overallPerformanceScore,
+                performanceLevel: overallPerformanceLevel,
+                riskLevel: overallRiskLevel,
+                description: performanceDescription,
+                riskExposure: 100 - overallPercentage,
+                excellentDomains: excellentCount,
+                goodDomains: goodCount,
+                averageDomains: averageCount,
+                poorDomains: poorCount,
+                criticalDomains: criticalCount,
+                totalStrengths: totalStrengths,
+                totalWeaknesses: totalWeaknesses,
+                totalCriticalIssues: totalCriticalIssues
+            };
+            
+            // Update UI
+            updateResultsUI();
+            createPerformanceChart();
+            createRiskMatrix();
+            createDomainScoreCards();
+            createTopRisks();
+            generateGapAnalysis();
+            createActionPlan();
+            updateValidityScores();
+        }
+
+        // Update results UI
+        function updateResultsUI() {
+            // Overall performance
+            document.getElementById('overall-score').textContent = `${overallPerformance.percentage}%`;
+            document.getElementById('performance-rating-text').textContent = 
+                `${overallPerformance.performanceLevel.charAt(0).toUpperCase() + overallPerformance.performanceLevel.slice(1)} Performance`;
+            document.getElementById('performance-rating-text').className = 
+                `performance-rating performance-${overallPerformance.performanceLevel}`;
+            document.getElementById('performance-description').textContent = overallPerformance.description;
+            
+            // Risk exposure
+            document.getElementById('risk-exposure').textContent = `${overallPerformance.riskExposure}%`;
+            document.getElementById('risk-exposure-bar').style.width = `${overallPerformance.riskExposure}%`;
+            
+            // Performance metrics
+            document.getElementById('metric-excellent').textContent = 
+                overallPerformance.excellentDomains + overallPerformance.goodDomains;
+            document.getElementById('metric-average').textContent = 
+                overallPerformance.performanceScore.toFixed(1);
+            document.getElementById('metric-critical').textContent = overallPerformance.totalCriticalIssues;
+            document.getElementById('metric-strengths').textContent = overallPerformance.totalStrengths;
+            
+            // Update performance summary
+            updatePerformanceSummary();
+        }
+
+        // Update performance summary
+        function updatePerformanceSummary() {
+            let strongestDomain = null;
+            let strongestScore = -1;
+            let weakestDomain = null;
+            let weakestScore = 101;
+            let totalScore = 0;
+            let improvementCount = 0;
+            
+            for (let i = 1; i <= 10; i++) {
+                const domain = domainScores[i];
+                if (domain && domain.percentage !== undefined) {
+                    totalScore += domain.percentage;
+                    
+                    if (domain.percentage > strongestScore) {
+                        strongestScore = domain.percentage;
+                        strongestDomain = i;
+                    }
+                    
+                    if (domain.percentage < weakestScore) {
+                        weakestScore = domain.percentage;
+                        weakestDomain = i;
+                    }
+                    
+                    if (domain.percentage < 60) {
+                        improvementCount++;
+                    }
+                }
+            }
+            
+            // Update summary
+            if (strongestDomain) {
+                document.getElementById('strongest-domain').textContent = domainInfo[strongestDomain].name;
+                document.getElementById('strongest-score').textContent = `${strongestScore}%`;
+                document.getElementById('strongest-benchmark').textContent = 
+                    domainScores[strongestDomain].benchmarkComparison === "excellent" || 
+                    domainScores[strongestDomain].benchmarkComparison === "good" ? 
+                    "Above Industry" : "At Industry Level";
+            }
+            
+            if (weakestDomain) {
+                document.getElementById('weakest-domain').textContent = domainInfo[weakestDomain].name;
+                document.getElementById('weakest-score').textContent = `${weakestScore}%`;
+                document.getElementById('weakest-benchmark').textContent = 
+                    domainScores[weakestDomain].benchmarkComparison === "poor" || 
+                    domainScores[weakestDomain].benchmarkComparison === "below" ? 
+                    "Below Industry" : "At Industry Level";
+            }
+            
+            const averageScore = totalScore > 0 ? Math.round(totalScore / 10) : 0;
+            document.getElementById('average-domain-score').textContent = `${averageScore}%`;
+            document.getElementById('average-benchmark').textContent = 
+                overallPerformance.performanceLevel === "excellent" || overallPerformance.performanceLevel === "good" ?
+                "Above Industry" : "At Industry Level";
+            
+            document.getElementById('improvement-count').textContent = improvementCount;
+        }
+
+        // Create performance chart
+        function createPerformanceChart() {
+            const ctx = document.getElementById('performanceChart');
+            if (!ctx) return;
+            
+            // Count domains by performance level
+            const performanceCounts = {
+                excellent: 0,
+                good: 0,
+                average: 0,
+                poor: 0,
+                "very-poor": 0
+            };
+            
+            for (let i = 1; i <= 10; i++) {
+                const domain = domainScores[i];
+                if (domain && domain.performanceLevel) {
+                    performanceCounts[domain.performanceLevel]++;
+                }
+            }
+            
+            // Create chart
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Excellent', 'Good', 'Average', 'Poor', 'Critical'],
+                    datasets: [{
+                        data: [
+                            performanceCounts.excellent,
+                            performanceCounts.good,
+                            performanceCounts.average,
+                            performanceCounts.poor,
+                            performanceCounts["very-poor"]
+                        ],
+                        backgroundColor: [
+                            '#4caf50',
+                            '#8bc34a',
+                            '#2196f3',
+                            '#ff9800',
+                            '#f44336'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} domains (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create risk matrix
+        function createRiskMatrix() {
+            const matrix = document.getElementById('risk-matrix');
+            matrix.innerHTML = '';
+            
+            const domains = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+            
+            domains.forEach(domainId => {
+                const domain = domainScores[domainId];
+                if (domain && domain.percentage !== undefined) {
+                    const domainInfoObj = domainInfo[domainId];
+                    
+                    let riskClass, riskLabel;
+                    if (domain.percentage >= 85) {
+                        riskClass = "risk-very-low";
+                        riskLabel = "Excellent";
+                    } else if (domain.percentage >= 70) {
+                        riskClass = "risk-low";
+                        riskLabel = "Good";
+                    } else if (domain.percentage >= 60) {
+                        riskClass = "risk-medium";
+                        riskLabel = "Average";
+                    } else if (domain.percentage >= 40) {
+                        riskClass = "risk-high";
+                        riskLabel = "Poor";
+                    } else {
+                        riskClass = "risk-critical";
+                        riskLabel = "Critical";
+                    }
+                    
+                    const cell = document.createElement('div');
+                    cell.className = `risk-cell ${riskClass}`;
+                    cell.innerHTML = `
+                        <div style="font-size: 0.8rem; font-weight: normal;">${domainInfoObj.name}</div>
+                        <div style="font-size: 1.1rem; font-weight: bold;">${domain.percentage}%</div>
+                        <div style="font-size: 0.7rem;">${riskLabel}</div>
+                    `;
+                    cell.title = `${domainInfoObj.fullName}: ${riskLabel} Performance (${domain.percentage}%)`;
+                    
+                    matrix.appendChild(cell);
+                }
+            });
+        }
+
+        // Create domain score cards
+        function createDomainScoreCards() {
+            const container = document.getElementById('domain-scores-container');
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= 10; i++) {
+                const domain = domainScores[i];
+                if (domain && domain.percentage !== undefined) {
+                    const domainInfoObj = domainInfo[i];
+                    
+                    // Performance icons
+                    const performanceIcons = {
+                        "excellent": "fas fa-star",
+                        "good": "fas fa-check-circle",
+                        "average": "fas fa-minus-circle",
+                        "poor": "fas fa-exclamation-circle",
+                        "very-poor": "fas fa-times-circle"
+                    };
+                    
+                    // Benchmark labels
+                    const benchmarkLabels = {
+                        "excellent": "Excellent",
+                        "good": "Good",
+                        "average": "Average",
+                        "below": "Below Avg",
+                        "poor": "Poor"
+                    };
+                    
+                    const benchmarkColors = {
+                        "excellent": "success",
+                        "good": "success",
+                        "average": "info",
+                        "below": "warning",
+                        "poor": "danger"
+                    };
+                    
+                    const col = document.createElement('div');
+                    col.className = 'col-md-6 col-lg-4 mb-3';
+                    
+                    col.innerHTML = `
+                        <div class="domain-score-card domain-score-${i}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="mb-2">
+                                        <i class="${performanceIcons[domain.performanceLevel]} me-2 text-${benchmarkColors[domain.benchmarkComparison]}"></i>
+                                        ${domainInfoObj.name}
+                                    </h5>
+                                    <div class="domain-score-value">${domain.percentage}%</div>
+                                    <div class="domain-score-label">Performance Score</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="sector-badge sector-${i}">Domain ${i}</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Performance Rating -->
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div>
+                                    <span class="performance-rating performance-${domain.performanceLevel}">
+                                        ${domain.performanceLevel.charAt(0).toUpperCase() + domain.performanceLevel.slice(1)} Performance
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-${benchmarkColors[domain.benchmarkComparison]}">
+                                        ${benchmarkLabels[domain.benchmarkComparison]} vs Industry
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Performance Score (1-10) -->
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small>Performance Rating</small>
+                                    <small><strong>${domain.performanceScore}/10</strong></small>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar ${domain.performanceScore >= 7 ? 'bg-success' : 
+                                        domain.performanceScore >= 5 ? 'bg-warning' : 'bg-danger'}" 
+                                        style="width: ${domain.performanceScore * 10}%">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Strengths & Weaknesses -->
+                            <div class="row mt-3">
+                                <div class="col-6 text-center">
+                                    <div class="text-success">
+                                        <i class="fas fa-check-circle fa-lg mb-1"></i>
+                                        <div><strong>${domain.strengths}</strong></div>
+                                        <small>Strengths</small>
+                                    </div>
+                                </div>
+                                <div class="col-6 text-center">
+                                    <div class="text-danger">
+                                        <i class="fas fa-exclamation-circle fa-lg mb-1"></i>
+                                        <div><strong>${domain.weaknesses}</strong></div>
+                                        <small>Weaknesses</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Benchmark Comparison -->
+                            <div class="mt-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-chart-line me-1"></i>
+                                    Industry Benchmark: ${domain.industryBenchmark}% | 
+                                    ${domain.benchmarkDiff >= 0 ? '+' : ''}${domain.benchmarkDiff}% difference
+                                </small>
+                            </div>
+                            
+                            <!-- Description -->
+                            <p class="score-description mt-3 mb-0">
+                                <small>
+                                    <i class="${domainInfoObj.icon} me-1"></i>
+                                    ${domainInfoObj.description}
+                                    ${domain.criticalIssues.length > 0 ? 
+                                        `<br><span class="text-danger"><i class="fas fa-exclamation-triangle me-1"></i>
+                                        ${domain.criticalIssues.length} critical issues</span>` : 
+                                        ''}
+                                </small>
+                            </p>
+                        </div>
+                    `;
+                    
+                    container.appendChild(col);
+                }
+            }
+        }
+
+        // Create top risks
+        function createTopRisks() {
+            const container = document.getElementById('top-risks-container');
+            container.innerHTML = '';
+            
+            // Sort critical risks by score (lowest first)
+            criticalRisks.sort((a, b) => a.score - b.score);
+            
+            // Take top 5
+            const topRisks = criticalRisks.slice(0, 5);
+            
+            if (topRisks.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>No critical risks identified.</strong> All domains are performing well above critical thresholds.
+                    </div>
+                `;
+                return;
+            }
+            
+            // Color coding based on score
+            const getScoreColor = (score) => {
+                if (score < 20) return "text-danger";
+                if (score < 40) return "text-warning";
+                if (score < 60) return "text-info";
+                return "text-secondary";
+            };
+            
+            topRisks.forEach((risk, index) => {
+                const domain = domainInfo[risk.domain];
+                const domainScoreData = domainScores[risk.domain];
+                const domainPercentage = domainScoreData ? domainScoreData.percentage : 0;
+                
+                const riskItem = document.createElement('div');
+                riskItem.className = `risk-item priority-${index + 1}`;
+                
+                let priorityText = '';
+                let priorityIcon = '';
+                
+                switch(index) {
+                    case 0:
+                        priorityText = 'Highest Priority';
+                        priorityIcon = 'fa-fire';
+                        break;
+                    case 1:
+                        priorityText = 'High Priority';
+                        priorityIcon = 'fa-exclamation-triangle';
+                        break;
+                    case 2:
+                        priorityText = 'Medium Priority';
+                        priorityIcon = 'fa-exclamation-circle';
+                        break;
+                    default:
+                        priorityText = 'Monitor Closely';
+                        priorityIcon = 'fa-eye';
+                        break;
+                }
+                
+                riskItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div style="flex: 1;">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas ${priorityIcon} me-2 text-danger"></i>
+                                <h6 class="mb-0">${priorityText}: ${domain.name} Risk</h6>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <strong><i class="fas fa-chart-pie me-1"></i>Domain Performance:</strong>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                                <div class="progress-bar ${domainPercentage < 40 ? 'bg-danger' : domainPercentage < 60 ? 'bg-warning' : 'bg-success'}" 
+                                                     style="width: ${domainPercentage}%">
+                                                </div>
+                                            </div>
+                                            <span class="fw-bold">${domainPercentage}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <strong><i class="fas fa-question-circle me-1"></i>Question Score:</strong>
+                                        <div class="${getScoreColor(risk.score)} fw-bold">${risk.score}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-light mt-2 mb-1 p-2">
+                                <small><em>"${risk.question.text.substring(0, 150)}..."</em></small>
+                            </div>
+                            
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                ${domain.description}
+                            </small>
+                        </div>
+                        <div class="ms-3">
+                            <div class="text-center">
+                                <span class="badge bg-danger fs-6 mb-1">${index + 1}</span>
+                                <div class="text-muted" style="font-size: 0.7rem;">Priority</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(riskItem);
+            });
+        }
+
+        // Generate gap analysis
+        function generateGapAnalysis() {
+            const gapsContainer = document.getElementById('gaps-container');
+            gapsContainer.innerHTML = '';
+            
+            // Find domains with critical or poor performance
+            const criticalDomains = [];
+            for (let i = 1; i <= 10; i++) {
+                const domain = domainScores[i];
+                if (domain && (domain.performanceLevel === "very-poor" || domain.performanceLevel === "poor")) {
+                    criticalDomains.push({
+                        domain: i,
+                        info: domainInfo[i],
+                        score: domain.percentage,
+                        performanceLevel: domain.performanceLevel,
+                        criticalCount: domain.criticalIssues.length
+                    });
+                }
+            }
+            
+            // Sort by score (lowest first)
+            criticalDomains.sort((a, b) => a.score - b.score);
+            
+            if (criticalDomains.length === 0) {
+                // Find domains with average performance that need improvement
+                const improvementDomains = [];
+                for (let i = 1; i <= 10; i++) {
+                    const domain = domainScores[i];
+                    if (domain && domain.performanceLevel === "average" && domain.percentage < 65) {
+                        improvementDomains.push({
+                            domain: i,
+                            info: domainInfo[i],
+                            score: domain.percentage,
+                            benchmarkDiff: domain.benchmarkDiff
+                        });
+                    }
+                }
+                
+                if (improvementDomains.length > 0) {
+                    improvementDomains.slice(0, 2).forEach(item => {
+                        const gapDiv = document.createElement('div');
+                        gapDiv.className = 'gap-item gap-moderate';
+                        gapDiv.innerHTML = `
+                            <h6><i class="fas fa-bullseye me-2"></i>Improvement Opportunity: ${item.info.name}</h6>
+                            <p class="mb-1"><strong>Current Score:</strong> ${item.score}% (${item.benchmarkDiff >= 0 ? '+' : ''}${item.benchmarkDiff}% vs industry)</p>
+                            <p class="mb-0">Opportunity to improve performance in this area to reach industry standards.</p>
+                        `;
+                        gapsContainer.appendChild(gapDiv);
+                    });
+                } else {
+                    gapsContainer.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-trophy me-2"></i>
+                            <strong>Excellent performance across all domains.</strong> Continue monitoring and optimization to maintain your competitive advantage.
+                        </div>
+                    `;
+                }
+                return;
+            }
+            
+            // Display critical gaps
+            criticalDomains.slice(0, 3).forEach((item, index) => {
+                let severity = item.performanceLevel === "very-poor" ? "critical" : "high";
+                
+                const gapDiv = document.createElement('div');
+                gapDiv.className = `gap-item gap-${severity}`;
+                gapDiv.innerHTML = `
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>${index === 0 ? 'Priority 1' : 'Priority 2'}: ${item.info.name} Performance Gap</h6>
+                    <p class="mb-1"><strong>Score:</strong> ${item.score}% (${item.criticalCount} critical issues)</p>
+                    <p class="mb-0">Immediate attention required. ${item.info.description} This area represents a significant performance gap.</p>
+                `;
+                gapsContainer.appendChild(gapDiv);
+            });
+        }
+
+        // Create action plan
+        function createActionPlan() {
+            // Month 1: Immediate Actions
+            const month1Container = document.getElementById('action-plan-month1');
+            month1Container.innerHTML = '';
+            
+            // Get top 3 critical domains
+            const criticalDomains = [];
+            for (let i = 1; i <= 10; i++) {
+                const domain = domainScores[i];
+                if (domain && domain.performanceLevel === "very-poor") {
+                    criticalDomains.push({
+                        domain: i,
+                        info: domainInfo[i],
+                        score: domain.percentage
+                    });
+                }
+            }
+            
+            criticalDomains.sort((a, b) => a.score - b.score);
+            
+            if (criticalDomains.length > 0) {
+                criticalDomains.slice(0, 2).forEach(item => {
+                    const actionDiv = document.createElement('div');
+                    actionDiv.className = 'action-plan-step step-1';
+                    actionDiv.innerHTML = `
+                        <h6><i class="fas fa-bolt me-2"></i>Immediate: ${item.info.name} Improvement</h6>
+                        <p class="mb-1"><strong>Target:</strong> Increase from ${item.score}% to ${item.score + 20}% in 30 days</p>
+                        <p class="mb-0"><strong>Action:</strong> Conduct focused assessment and implement quick-win improvements</p>
+                    `;
+                    month1Container.appendChild(actionDiv);
+                });
+            }
+            
+            // Month 2: Strategic Initiatives
+            const month2Container = document.getElementById('action-plan-month2');
+            month2Container.innerHTML = '';
+            
+            // Get domains with average or poor performance
+            const improvementDomains = [];
+            for (let i = 1; i <= 10; i++) {
+                const domain = domainScores[i];
+                if (domain && (domain.performanceLevel === "poor" || domain.performanceLevel === "average")) {
+                    improvementDomains.push({
+                        domain: i,
+                        info: domainInfo[i],
+                        score: domain.percentage
+                    });
+                }
+            }
+            
+            improvementDomains.sort((a, b) => a.score - b.score);
+            
+            if (improvementDomains.length > 0) {
+                improvementDomains.slice(0, 2).forEach((item, index) => {
+                    const actionDiv = document.createElement('div');
+                    actionDiv.className = `action-plan-step step-${index + 2}`;
+                    actionDiv.innerHTML = `
+                        <h6><i class="fas fa-chart-line me-2"></i>Strategic: ${item.info.name} Enhancement</h6>
+                        <p class="mb-1"><strong>Target:</strong> Improve from ${item.score}% to ${item.score + 15}% in 60 days</p>
+                        <p class="mb-0"><strong>Action:</strong> Implement structured improvement program with milestones</p>
+                    `;
+                    month2Container.appendChild(actionDiv);
+                });
+            }
+            
+            // Month 3: Long-term Improvements
+            const month3Container = document.getElementById('action-plan-month3');
+            month3Container.innerHTML = '';
+            
+            // Get all domains for continuous improvement
+            const allDomains = [];
+            for (let i = 1; i <= 10; i++) {
+                const domain = domainScores[i];
+                if (domain) {
+                    allDomains.push({
+                        domain: i,
+                        info: domainInfo[i],
+                        score: domain.percentage
+                    });
+                }
+            }
+            
+            allDomains.sort((a, b) => b.score - a.score); // Sort by highest score first
+            
+            if (allDomains.length > 0) {
+                allDomains.slice(0, 2).forEach((item, index) => {
+                    const actionDiv = document.createElement('div');
+                    actionDiv.className = `action-plan-step step-${index + 4}`;
+                    actionDiv.innerHTML = `
+                        <h6><i class="fas fa-rocket me-2"></i>Optimization: ${item.info.name} Excellence</h6>
+                        <p class="mb-1"><strong>Target:</strong> Maintain ${item.score}%+ and implement best practices</p>
+                        <p class="mb-0"><strong>Action:</strong> Document processes and establish performance benchmarks</p>
+                    `;
+                    month3Container.appendChild(actionDiv);
+                });
+            }
+        }
+
+        // Update validity scores
+        function updateValidityScores() {
+            const answered = Object.keys(userResponses).length;
+            const completionPercentage = Math.round((answered / currentRandomQuestions.length) * 100);
+            
+            let validityScore = 85;
+            let validityLevel = "High";
+            
+            if (completionPercentage < 70) {
+                validityScore -= 20;
+                validityLevel = "Moderate";
+            }
+            if (completionPercentage < 50) {
+                validityScore -= 30;
+                validityLevel = "Low";
+            }
+            
+            if (criticalRisks.length > 10) {
+                validityScore -= 10;
+            }
+            
+            validityScore = Math.max(0, Math.min(100, validityScore));
+            
+            document.getElementById('validity-badge').textContent = validityLevel;
+            document.getElementById('validity-badge').className = `badge bg-${validityScore >= 80 ? 'success' : validityScore >= 60 ? 'warning' : 'danger'}`;
+            document.getElementById('validity-bar').style.width = `${validityScore}%`;
+        }
+
+        // Generate PDF Report
+        async function generatePDFReport() {
+            try {
+                // Show modal
+                pdfModal.classList.add('active');
+                
+                // Create PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                
+                let yPos = 15;
+                
+                // Title Page
+                doc.setFillColor(202, 126, 244, 0.1);
+                doc.rect(0, 0, pageWidth, pageHeight, 'F');
+                
+                doc.setFontSize(28);
+                doc.setTextColor(44, 62, 80);
+                doc.text("Business Performance Assessment Report", pageWidth / 2, 40, { align: 'center' });
+                
+                doc.setFontSize(16);
+                doc.setTextColor(100, 100, 100);
+                doc.text("Comprehensive Risk & Performance Analysis", pageWidth / 2, 55, { align: 'center' });
+                
+                // Logo/Divider
+                doc.setDrawColor(202, 126, 244);
+                doc.setLineWidth(2);
+                doc.line(50, 70, pageWidth - 50, 70);
+                
+                // Assessment Details
+                doc.setFontSize(12);
+                doc.setTextColor(80, 80, 80);
+                yPos = 85;
+                
+                doc.text(`Assessment Date: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPos, { align: 'center' });
+                yPos += 10;
+                doc.text(`Total Questions Answered: ${Object.keys(userResponses).length} of ${currentRandomQuestions.length}`, pageWidth / 2, yPos, { align: 'center' });
+                yPos += 10;
+                
+                // Overall Score
+                doc.setFontSize(36);
+                const overallColor = overallPerformance.percentage >= 70 ? [39, 174, 96] : 
+                                    overallPerformance.percentage >= 50 ? [243, 156, 18] : 
+                                    [231, 76, 60];
+                doc.setTextColor(...overallColor);
+                doc.text(`${overallPerformance.percentage}%`, pageWidth / 2, yPos + 15, { align: 'center' });
+                
+                doc.setFontSize(14);
+                doc.setTextColor(100, 100, 100);
+                doc.text("Overall Performance Score", pageWidth / 2, yPos + 25, { align: 'center' });
+                
+                // Performance Level
+                doc.setFontSize(12);
+                doc.setTextColor(80, 80, 80);
+                doc.text(`Performance Level: ${overallPerformance.performanceLevel.charAt(0).toUpperCase() + overallPerformance.performanceLevel.slice(1)}`, pageWidth / 2, yPos + 35, { align: 'center' });
+                
+                // Add new page
+                doc.addPage();
+                yPos = 20;
+                
+                // Domain Performance Summary
+                doc.setFontSize(18);
+                doc.setTextColor(44, 62, 80);
+                doc.text("Domain Performance Summary", 20, yPos);
+                yPos += 15;
+                
+                // Table headers
+                doc.setFontSize(10);
+                doc.setTextColor(255, 255, 255);
+                doc.setFillColor(44, 62, 80);
+                doc.rect(20, yPos, pageWidth - 40, 8, 'F');
+                
+                doc.text("Domain", 25, yPos + 6);
+                doc.text("Score", 80, yPos + 6);
+                doc.text("Performance", 110, yPos + 6);
+                doc.text("Benchmark", 150, yPos + 6);
+                doc.text("Status", pageWidth - 45, yPos + 6);
+                
+                yPos += 10;
+                
+                // Domain rows
+                doc.setTextColor(0, 0, 0);
+                for (let i = 1; i <= 10; i++) {
+                    const domain = domainScores[i];
+                    if (domain) {
+                        // Alternate row colors
+                        if ((i - 1) % 2 === 0) {
+                            doc.setFillColor(248, 249, 250);
+                            doc.rect(20, yPos - 2, pageWidth - 40, 8, 'F');
+                        }
+                        
+                        const domainName = domainInfo[i].name;
+                        const score = `${domain.percentage}%`;
+                        const performance = domain.performanceLevel;
+                        const benchmark = `${domain.industryBenchmark}%`;
+                        const status = domain.benchmarkComparison;
+                        
+                        // Set color based on performance
+                        if (domain.percentage >= 70) doc.setTextColor(39, 174, 96);
+                        else if (domain.percentage >= 50) doc.setTextColor(243, 156, 18);
+                        else doc.setTextColor(231, 76, 60);
+                        
+                        doc.text(domainName, 25, yPos + 4);
+                        doc.text(score, 80, yPos + 4);
+                        doc.text(performance, 110, yPos + 4);
+                        
+                        doc.setTextColor(80, 80, 80);
+                        doc.text(benchmark, 150, yPos + 4);
+                        
+                        // Status badge
+                        const statusColor = status === "excellent" ? [76, 175, 80] :
+                                           status === "good" ? [139, 195, 74] :
+                                           status === "average" ? [33, 150, 243] :
+                                           status === "below" ? [255, 152, 0] :
+                                           [244, 67, 54];
+                        
+                        doc.setFillColor(...statusColor);
+                        doc.setTextColor(255, 255, 255);
+                        const statusWidth = doc.getTextWidth(status) + 4;
+                        doc.roundedRect(pageWidth - 45 - statusWidth, yPos - 1, statusWidth, 6, 2, 2, 'F');
+                        doc.text(status, pageWidth - 45 - statusWidth + 2, yPos + 4);
+                        
+                        doc.setTextColor(0, 0, 0);
+                        yPos += 10;
+                        
+                        // Check if we need a new page
+                        if (yPos > pageHeight - 20) {
+                            doc.addPage();
+                            yPos = 20;
+                        }
+                    }
+                }
+                
+                // Add page for top risks
+                doc.addPage();
+                yPos = 20;
+                
+                // Top Risks Section
+                doc.setFontSize(18);
+                doc.setTextColor(44, 62, 80);
+                doc.text("Top Priority Actions", 20, yPos);
+                yPos += 15;
+                
+                criticalRisks.slice(0, 5).forEach((risk, index) => {
+                    const domain = domainInfo[risk.domain];
+                    
+                    // Risk title
+                    doc.setFontSize(12);
+                    doc.setTextColor(231, 76, 60);
+                    doc.text(`Priority ${index + 1}: ${domain.name} Risk`, 25, yPos);
+                    yPos += 7;
+                    
+                    // Risk question
+                    doc.setFontSize(10);
+                    doc.setTextColor(80, 80, 80);
+                    const questionLines = doc.splitTextToSize(`"${risk.question.text}"`, pageWidth - 50);
+                    doc.text(questionLines, 25, yPos);
+                    yPos += (questionLines.length * 5) + 5;
+                    
+                    // Risk score
+                    doc.text(`Score: ${risk.score}% | Domain Performance: ${domainScores[risk.domain].percentage}%`, 25, yPos);
+                    yPos += 10;
+                    
+                    // Separator
+                    if (index < 4) {
+                        doc.setDrawColor(200, 200, 200);
+                        doc.setLineWidth(0.5);
+                        doc.line(20, yPos, pageWidth - 20, yPos);
+                        yPos += 10;
+                    }
+                    
+                    // Check if we need a new page
+                    if (yPos > pageHeight - 20) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                });
+                
+                // Add page for action plan
+                doc.addPage();
+                yPos = 20;
+                
+                // Action Plan Section
+                doc.setFontSize(18);
+                doc.setTextColor(44, 62, 80);
+                doc.text("90-Day Action Plan", 20, yPos);
+                yPos += 15;
+                
+                // Month 1
+                doc.setFontSize(14);
+                doc.setTextColor(198, 40, 40);
+                doc.text("Month 1: Immediate Actions (Weeks 1-4)", 25, yPos);
+                yPos += 8;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(80, 80, 80);
+                const month1Actions = [
+                    "Address critical issues identified in top risks",
+                    "Implement quick-win improvements in weakest domains",
+                    "Establish monitoring system for key metrics"
+                ];
+                
+                month1Actions.forEach(action => {
+                    doc.text(`• ${action}`, 30, yPos);
+                    yPos += 6;
+                });
+                
+                yPos += 5;
+                
+                // Month 2
+                doc.setFontSize(14);
+                doc.setTextColor(216, 67, 21);
+                doc.text("Month 2: Strategic Initiatives (Weeks 5-8)", 25, yPos);
+                yPos += 8;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(80, 80, 80);
+                const month2Actions = [
+                    "Implement structured improvement programs",
+                    "Conduct training and skill development",
+                    "Review and optimize key processes"
+                ];
+                
+                month2Actions.forEach(action => {
+                    doc.text(`• ${action}`, 30, yPos);
+                    yPos += 6;
+                });
+                
+                yPos += 5;
+                
+                // Month 3
+                doc.setFontSize(14);
+                doc.setTextColor(239, 108, 0);
+                doc.text("Month 3: Long-term Improvements (Weeks 9-12)", 25, yPos);
+                yPos += 8;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(80, 80, 80);
+                const month3Actions = [
+                    "Establish continuous improvement framework",
+                    "Document best practices and standards",
+                    "Set up quarterly review process"
+                ];
+                
+                month3Actions.forEach(action => {
+                    doc.text(`• ${action}`, 30, yPos);
+                    yPos += 6;
+                });
+                
+                // Footer on last page
+                doc.setFontSize(8);
+                doc.setTextColor(150, 150, 150);
+                doc.text(`Generated on ${new Date().toLocaleString()} | Business Performance Assessment Tool`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+                
+                // Save PDF
+                const fileName = `Business-Assessment-${new Date().toISOString().split('T')[0]}.pdf`;
+                doc.save(fileName);
+                
+                // Hide modal
+                pdfModal.classList.remove('active');
+                
+                // Show success message
+                showNotification('success', 'PDF report generated successfully!');
+                
+            } catch (error) {
+                console.error('PDF generation error:', error);
+                pdfModal.classList.remove('active');
+                showNotification('error', 'Error generating PDF. Please try again.');
+            }
+        }
+
+        // Generate Action Plan Text File
+        function generateActionPlanText() {
+            let actionPlan = `BUSINESS PERFORMANCE ASSESSMENT - ACTION PLAN\n`;
+            actionPlan += `=============================================\n\n`;
+            actionPlan += `Assessment Date: ${new Date().toLocaleDateString()}\n`;
+            actionPlan += `Overall Score: ${overallPerformance.percentage}%\n`;
+            actionPlan += `Performance Level: ${overallPerformance.performanceLevel}\n\n`;
+            
+            actionPlan += `TOP PRIORITY ACTIONS:\n`;
+            actionPlan += `=====================\n\n`;
+            
+            criticalRisks.slice(0, 5).forEach((risk, index) => {
+                actionPlan += `${index + 1}. ${domainInfo[risk.domain].name} Risk\n`;
+                actionPlan += `   Question: ${risk.question.text.substring(0, 100)}...\n`;
+                actionPlan += `   Score: ${risk.score}% | Domain: ${domainScores[risk.domain].percentage}%\n\n`;
+            });
+            
+            actionPlan += `90-DAY ACTION PLAN:\n`;
+            actionPlan += `===================\n\n`;
+            
+            actionPlan += `MONTH 1: Immediate Actions (Weeks 1-4)\n`;
+            actionPlan += `---------------------------------------\n`;
+            actionPlan += `• Address critical issues from top risks\n`;
+            actionPlan += `• Implement quick-win improvements\n`;
+            actionPlan += `• Establish monitoring system\n\n`;
+            
+            actionPlan += `MONTH 2: Strategic Initiatives (Weeks 5-8)\n`;
+            actionPlan += `-------------------------------------------\n`;
+            actionPlan += `• Implement structured improvement programs\n`;
+            actionPlan += `• Conduct training and skill development\n`;
+            actionPlan += `• Review and optimize key processes\n\n`;
+            
+            actionPlan += `MONTH 3: Long-term Improvements (Weeks 9-12)\n`;
+            actionPlan += `---------------------------------------------\n`;
+            actionPlan += `• Establish continuous improvement framework\n`;
+            actionPlan += `• Document best practices and standards\n`;
+            actionPlan += `• Set up quarterly review process\n\n`;
+            
+            actionPlan += `DOMAIN PERFORMANCE SUMMARY:\n`;
+            actionPlan += `===========================\n\n`;
+            
+            for (let i = 1; i <= 10; i++) {
+                const domain = domainScores[i];
+                if (domain) {
+                    actionPlan += `${domainInfo[i].name}: ${domain.percentage}% (${domain.performanceLevel})\n`;
+                }
+            }
+            
+            // Create and download text file
+            const blob = new Blob([actionPlan], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Action-Plan-${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('success', 'Action plan downloaded successfully!');
+        }
+
+        // Share report summary
+        function shareReport() {
+            const shareText = `My Business Performance Assessment Results:\n` +
+                            `Overall Score: ${overallPerformance.percentage}%\n` +
+                            `Performance Level: ${overallPerformance.performanceLevel}\n` +
+                            `Top Strength: ${document.getElementById('strongest-domain').textContent}\n` +
+                            `Area for Improvement: ${document.getElementById('weakest-domain').textContent}\n` +
+                            `Generated using Business Performance Assessment Tool`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'My Business Assessment Results',
+                    text: shareText,
+                    url: window.location.href
+                })
+                .then(() => showNotification('success', 'Report shared successfully!'))
+                .catch(error => {
+                    console.log('Sharing cancelled:', error);
+                    copyToClipboard(shareText);
+                });
+            } else {
+                copyToClipboard(shareText);
+            }
+        }
+
+        // Copy text to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text)
+                .then(() => showNotification('success', 'Report summary copied to clipboard!'))
+                .catch(err => {
+                    console.error('Failed to copy:', err);
+                    showNotification('error', 'Failed to copy to clipboard.');
+                });
+        }
+
+        // Show notification
+        function showNotification(type, message) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show shuffle-alert`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.getElementById('app-container');
+            container.insertBefore(notification, container.firstChild);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', () => {
+            introSection.classList.add('hidden');
+            assessmentSection.classList.remove('hidden');
+            initAssessment();
+            
+            setTimeout(() => {
+                document.getElementById('current-question-container').scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }, 100);
+        });
+
+        completeBtn.addEventListener('click', completeAssessment);
+
+        // Retake assessment
+        document.getElementById('retake-assessment').addEventListener('click', () => {
+            if (confirm("Are you sure you want to retake the assessment? Your current responses will be lost.")) {
+                scorecardSection.classList.add('hidden');
+                introSection.classList.remove('hidden');
+                window.scrollTo(0, 0);
+            }
+        });
+
+        // Download PDF
+        document.getElementById('download-pdf').addEventListener('click', generatePDFReport);
+
+        // Download action plan
+        document.getElementById('download-action-plan').addEventListener('click', generateActionPlanText);
+
+        // Share report
+        document.getElementById('share-report').addEventListener('click', shareReport);
+
+        // Initialize
+        introSection.classList.remove('hidden');
+        assessmentSection.classList.add('hidden');
+        scorecardSection.classList.add('hidden');
+    </script>
+</body>
+</html>
